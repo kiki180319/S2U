@@ -38,6 +38,8 @@ import com.example.ui.viewmodel.HeartsViewModel
 fun VideoDashboardScreen(viewModel: HeartsViewModel) {
     val videos by viewModel.videos.collectAsStateWithLifecycle()
     val selectedVideo by viewModel.selectedVideo.collectAsStateWithLifecycle()
+    val isVideosLoading by viewModel.isVideosLoading.collectAsStateWithLifecycle()
+    val videosError by viewModel.videosError.collectAsStateWithLifecycle()
     
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Semua", "Favorit")
@@ -91,9 +93,31 @@ fun VideoDashboardScreen(viewModel: HeartsViewModel) {
                         }
                     }
 
-                    if (videos.isEmpty()) {
+                    if (isVideosLoading) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = HeartsPink)
+                        }
+                    } else if (videosError != null && videos.isEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.VideoLibrary,
+                                contentDescription = "Error loading videos",
+                                tint = PremiumMediumGray,
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = videosError!!,
+                                color = PremiumWhite,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            )
                         }
                     } else if (displayedVideos.isEmpty()) {
                         Column(

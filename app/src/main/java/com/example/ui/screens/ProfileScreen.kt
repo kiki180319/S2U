@@ -44,9 +44,41 @@ fun ProfileScreen(viewModel: HeartsViewModel) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     var notificationsEnabled by remember { mutableStateOf(true) }
 
-    if (userProfile == null) {
+    val isLoading by viewModel.isProfileLoading.collectAsStateWithLifecycle()
+    val profileError by viewModel.profileError.collectAsStateWithLifecycle()
+
+    if (isLoading) {
         Box(modifier = Modifier.fillMaxSize().background(PremiumBlack), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = HeartsPink)
+        }
+        return
+    }
+
+    if (userProfile == null || profileError != null) {
+        Box(modifier = Modifier.fillMaxSize().background(PremiumBlack), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Not Logged In",
+                    tint = PremiumMediumGray,
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = profileError ?: "Silakan login untuk melihat profil Anda.",
+                    color = PremiumWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { /* TODO: Implement Login Action */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = HeartsPink)
+                ) {
+                    Text("Login / Buat Profil", color = PremiumWhite)
+                }
+            }
         }
         return
     }
