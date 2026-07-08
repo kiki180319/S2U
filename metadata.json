@@ -1,0 +1,6 @@
+{
+  "name": "Hearts2Hearts",
+  "description": "Hearts2Hearts official fanbase community hub app with events, forums, and YouTube guides.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
