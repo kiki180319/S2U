@@ -15,18 +15,22 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Remove debug signing config
+        run: sed -i '/signingConfig = signingConfigs.getByName("debugConfig")/d' app/build.gradle.kts
+
+      - name: Generate Gradle Wrapper
+        run: gradle wrapper --gradle-version 9.3.1
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug APK
+      - name: Build APK
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Find APK
+        run: find . -name "*.apk"
+
+      - uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Build Status
-        if: success()
-        run: echo "✅ Build APK berhasil!"
+          path: '**/app-debug.apk'
