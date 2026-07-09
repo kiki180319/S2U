@@ -1,11 +1,10 @@
-(https://raw.githubusercontent.com/kiki180319/H2Hassets/main/NAMA_FILE_GAMBAR.png)
+(https://raw.githubusercontent.com/kiki180319/H2Hassets/17a03531c1cbb8ac44074b0f647c86c9.jpg)
 
 # 🚀 Nama Aplikasi Kamu
 [![GitHub license](https://img.shields.io/github/license/kiki180319/nama-repo-kamu)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/kiki180319/nama-repo-kamu)](https://github.com/kiki180319/nama-repo-kamu/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/kiki180319/nama-repo-kamu)](https://github.com/kiki180319/nama-repo-kamu/issues)
-Tulis deskripsi singkat, padat, dan jelas tentang apa yang dilakukan oleh aplikasi kamu di sini. Jelaskan masalah apa yang diselesaikan atau fitur utama apa yang ditawarkan kepada pengguna.
----
+
 ## 📸 Screenshots
 Ganti link di bawah ini dengan nama file gambar yang ada di repositori H2Hassets kamu.
 
@@ -14,50 +13,7 @@ Ganti link di bawah ini dengan nama file gambar yang ada di repositori H2Hassets
 | <img src="https://raw.githubusercontent.com/kiki180319/H2Hassets/main/mockup1.png" width="300" alt="Screenshot 1"> | <img src="https://raw.githubusercontent.com/kiki180319/H2Hassets/main/mockup2.png" width="300" alt="Screenshot 2"> |
 
 ---
-## ✨ Fitur Utama
-Berikut adalah beberapa fitur unggulan yang tersedia di aplikasi ini:
-- 🌟 **Fitur 1**: Deskripsi singkat mengenai fungsi fitur pertama.
-- 🔒 **Fitur 2 (Keamanan/Autentikasi)**: Deskripsi singkat fitur kedua.
-- 📊 **Fitur 3 (Dashboard/Data)**: Deskripsi singkat fitur ketiga.
-- 🎨 **UI/UX Responsif**: Tampilan yang nyaman digunakan di berbagai perangkat.
----
-## 🛠️ Teknologi yang Digunakan
-Aplikasi ini dibangun menggunakan ekosistem teknologi berikut:
-- **Frontend / Framework**: (Contoh: React Native / Flutter / Kotlin / Next.js)
-- **State Management**: (Contoh: Redux / Provider / Bloc)
-- **Backend / Database**: (Contoh: Firebase / Node.js / PostgreSQL)
-- **Tools Lain**: (Contoh: Axios / Retrofit / Git)
----
-## 🚀 Cara Memulai (Getting Started)
-Ikuti langkah-langkah berikut untuk menjalankan proyek ini di lingkungan lokal kamu.
-### Prasyarat (Prerequisites)
-Pastikan kamu sudah menginstal perangkat lunak berikut:
-- Node.js / Flutter SDK / Android Studio (sesuaikan dengan aplikasi kamu)
-- Git
-### Instalasi & Menjalankan Aplikasi
-1. **Clone Repositori Ini**
-   ```bash
-   git clone [https://github.com/kiki180319/nama-repo-kamu.git](https://github.com/kiki180319/nama-repo-kamu.git)
-   cd nama-repo-kamu
-```
- 2. **Instal Dependensi**
-   ```bash
-   # Jika menggunakan Node/React/React Native
-   npm install
-   
-   # Jika menggunakan Flutter
-   flutter pub get
-   
-   ```
- 3. **Jalankan Aplikasi**
-   ```bash
-   # Jika menggunakan Node/Web
-   npm run dev
-   
-   # Jika menggunakan Flutter
-   flutter run
-   
-   ```
+
 ## 🤝 Kontribusi
 Kontribusi selalu terbuka untuk siapa saja! Jika kamu ingin meningkatkan kualitas aplikasi ini, silakan ikuti langkah berikut:
  1. Fork repositori ini.
