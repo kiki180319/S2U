@@ -1,4 +1,4 @@
-(https://raw.githubusercontent.com/kiki180319/H2Hassets/17a03531c1cbb8ac44074b0f647c86c9.jpg)
+https://raw.githubusercontent.com/kiki180319/H2Hassets/17a03531c1cbb8ac44074b0f647c86c9.jpg
 
 # 🚀 Nama Aplikasi Kamu
 [![GitHub license](https://img.shields.io/github/license/kiki180319/nama-repo-kamu)](LICENSE)
