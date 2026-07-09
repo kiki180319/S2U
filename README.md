@@ -1,50 +1,39 @@
-https://raw.githubusercontent.com/kiki180319/H2Hassets/17a03531c1cbb8ac44074b0f647c86c9.jpg
+# ❤️ Hearts2Hearts (H2H)
+An elegant, private, and meaningful mobile application designed to strengthen connections between couples, close friends, or family members. **Hearts2Hearts** helps you cherish memories, communicate deeply, and track your special milestones together.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kiki180319/H2Hassets/main/logo.png" alt="Hearts2Hearts Logo" width="150" height="150">
+</p>
+---
+## 📸 App Preview
+Berikut adalah tampilan antarmuka dari aplikasi Hearts2Hearts. 
+*(Pastikan nama file di repositori `H2Hassets` kamu sesuai dengan nama file di bawah ini, atau ubah namanya sesuai aset yang kamu miliki)*
 
-# 🚀 Nama Aplikasi Kamu
-[![GitHub license](https://img.shields.io/github/license/kiki180319/nama-repo-kamu)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/kiki180319/nama-repo-kamu)](https://github.com/kiki180319/nama-repo-kamu/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/kiki180319/nama-repo-kamu)](https://github.com/kiki180319/nama-repo-kamu/issues)
-
-## 📸 Screenshots
-Ganti link di bawah ini dengan nama file gambar yang ada di repositori H2Hassets kamu.
-
-| Halaman Utama | Halaman Detail / Fitur |
-| :--- | :--- |
-| <img src="https://raw.githubusercontent.com/kiki180319/H2Hassets/main/mockup1.png" width="300" alt="Screenshot 1"> | <img src="https://raw.githubusercontent.com/kiki180319/H2Hassets/main/mockup2.png" width="300" alt="Screenshot 2"> |
+| 📱 Splash & Login | 🏠 Home Dashboard | 💬 Deep Chat Feature |
+| :--- | :--- | :--- |
+| <img src="https://raw.githubusercontent.com/kiki180319/H2Hassets/main/screenshot1.png" width="250" alt="Screen 1"> | <img src="https://raw.githubusercontent.com/kiki180319/H2Hassets/main/screenshot2.png" width="250" alt="Screen 2"> | <img src="https://raw.githubusercontent.com/kiki180319/H2Hassets/main/screenshot3.png" width="250" alt="Screen 3"> |
 
 ---
-
-## 🤝 Kontribusi
-Kontribusi selalu terbuka untuk siapa saja! Jika kamu ingin meningkatkan kualitas aplikasi ini, silakan ikuti langkah berikut:
- 1. Fork repositori ini.
- 2. Buat branch fitur baru (git checkout -b fitur/FiturKeren).
- 3. Commit perubahan kamu (git commit -m 'Menambahkan Fitur Keren').
- 4. Push ke branch tersebut (git push origin fitur/FiturKeren).
- 5. Buat Pull Request baru.
-## 📄 Lisensi
-Proyek ini dilisensikan di bawah **MIT License** - lihat file LICENSE untuk detail lebih lanjut.
-Dibuat dengan ❤️ oleh kiki180319
-```
-<FollowUp label="Bantu saya melengkapi teks di atas sesuai dengan detail aplikasi saya" query="Tolong bantu saya mengisi bagian deskripsi, fitur, dan teknologi untuk aplikasi saya. Ini adalah aplikasi tentang [isi jenis aplikasimu di sini]"/>
-```
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
-
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/dcb0ce6f-8196-43e8-a7d7-1ec56df8333d
-
-## Run Locally
-
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
-
-
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
+## ✨ Fitur Utama (Key Features)
+- 💬 **Deep Talk Prompts**: Ratusan pertanyaan bermakna untuk membantu kamu dan pasangan saling mengenal lebih dalam setiap harinya.
+- 📅 **Anniversary & Milestone Tracker**: Jangan lewatkan momen penting! Hitung mundur hari jadi (anniversary) dan acara spesial kalian.
+- 📸 **Shared Memory Lane**: Galeri foto privat bersama untuk menyimpan momen-momen berharga tanpa perlu khawatir tentang privasi media sosial umum.
+- 📝 **Dual Journaling**: Tulis catatan harian bersama, bagikan apa yang kamu rasakan hari ini, dan biarkan pasanganmu mengetahuinya.
+- 🔒 **End-to-End Privacy**: Ruang obrolan dan data yang aman, dienkripsi khusus hanya untuk kalian berdua.
+---
+## 🛠️ Teknologi yang Digunakan (Tech Stack)
+Aplikasi ini dibangun menggunakan teknologi modern untuk memastikan performa yang cepat dan aman:
+- **Mobile Framework**: [Flutter](https://flutter.dev/) / [React Native](https://reactnative.dev/) (Cross-platform iOS & Android)
+- **Backend & Database**: [Firebase](https://firebase.google.com/) (Cloud Firestore & Authentication)
+- **State Management**: Provider / Redux / BLoC
+- **Storage**: Firebase Cloud Storage (Untuk mengamankan foto kenangan)
+---
+## 🚀 Cara Menjalankan Proyek (Getting Started)
+Ikuti panduan ini untuk menjalankan aplikasi Hearts2Hearts di perangkat lokal kamu.
+### Prasyarat
+- Sudah menginstal **Flutter SDK** atau **Node.js** (Sesuai framework yang digunakan)
+- Android Studio / Xcode untuk emulator
+### Langkah Instalasi
+1. **Clone Repositori Aplikasi**
+   ```bash
+   git clone [https://github.com/kiki180319/Hearts2Hearts.git](https://github.com/kiki180319/Hearts2Hearts.git)
+   cd Hearts2Hearts
