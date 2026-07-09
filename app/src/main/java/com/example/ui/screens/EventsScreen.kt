@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +42,10 @@ import com.example.ui.viewmodel.HeartsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -49,37 +54,70 @@ fun EventsScreen(viewModel: HeartsViewModel) {
     val selectedEvent by viewModel.selectedEvent.collectAsStateWithLifecycle()
     val comments by viewModel.eventComments.collectAsStateWithLifecycle()
     val attendees by viewModel.eventAttendees.collectAsStateWithLifecycle()
+    
+    var showAddEventDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().background(PremiumBlack)) {
-        AnimatedContent(
-            targetState = selectedEvent,
-            transitionSpec = {
-                if (targetState != null) {
-                    slideInHorizontally { width -> width } + fadeIn() togetherWith
-                            slideOutHorizontally { width -> -width } + fadeOut()
-                } else {
-                    slideInHorizontally { width -> -width } + fadeIn() togetherWith
-                            slideOutHorizontally { width -> width } + fadeOut()
+        Scaffold(
+            floatingActionButton = {
+                if (selectedEvent == null) {
+                    FloatingActionButton(
+                        onClick = { showAddEventDialog = true },
+                        containerColor = HeartsPink,
+                        contentColor = Color.White,
+                        modifier = Modifier.padding(bottom = 80.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Tambah Event"
+                        )
+                    }
                 }
             },
-            label = "EventNavigation"
-        ) { event ->
-            if (event == null) {
-                EventListScreen(
-                    events = events,
-                    onEventClick = { viewModel.selectEvent(it) },
-                    onJoinEvent = { viewModel.toggleJoinEvent(it) }
-                )
-            } else {
-                EventDetailScreen(
-                    event = event,
-                    comments = comments,
-                    attendees = attendees,
-                    onBack = { viewModel.selectEvent(null) },
-                    onJoinEvent = { viewModel.toggleJoinEvent(event) },
-                    onSendComment = { content -> viewModel.postEventComment(event.id, content) }
-                )
+            containerColor = Color.Transparent
+        ) { padding ->
+            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                AnimatedContent(
+                    targetState = selectedEvent,
+                    transitionSpec = {
+                        if (targetState != null) {
+                            slideInHorizontally { width -> width } + fadeIn() togetherWith
+                                    slideOutHorizontally { width -> -width } + fadeOut()
+                        } else {
+                            slideInHorizontally { width -> -width } + fadeIn() togetherWith
+                                    slideOutHorizontally { width -> width } + fadeOut()
+                        }
+                    },
+                    label = "EventNavigation"
+                ) { event ->
+                    if (event == null) {
+                        EventListScreen(
+                            events = events,
+                            onEventClick = { viewModel.selectEvent(it) },
+                            onJoinEvent = { viewModel.toggleJoinEvent(it) }
+                        )
+                    } else {
+                        EventDetailScreen(
+                            event = event,
+                            comments = comments,
+                            attendees = attendees,
+                            onBack = { viewModel.selectEvent(null) },
+                            onJoinEvent = { viewModel.toggleJoinEvent(event) },
+                            onSendComment = { content -> viewModel.postEventComment(event.id, content) }
+                        )
+                    }
+                }
             }
+        }
+        
+        if (showAddEventDialog) {
+            AddEventDialog(
+                onDismiss = { showAddEventDialog = false },
+                onConfirm = { title, desc, category, date, location, formUrl ->
+                    viewModel.addCustomEvent(title, desc, category, date, location, formUrl)
+                    showAddEventDialog = false
+                }
+            )
         }
     }
 }
@@ -467,4 +505,201 @@ fun EventCommentCard(comment: EventCommentEntity) {
             )
         }
     }
+}
+
+@Composable
+fun AddEventDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (title: String, desc: String, category: String, date: String, location: String, formUrl: String?) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var desc by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("GATHERING") }
+    var date by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var formUrl by remember { mutableStateOf("") }
+    
+    val categories = listOf("GATHERING", "CONCERT", "STREAMING", "PROJECT")
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Tambah Acara Fandom Baru",
+                color = PremiumWhite,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Buat gathering fanbase atau streaming party koordinasi google form.",
+                    color = PremiumLightGray,
+                    fontSize = 12.sp
+                )
+                
+                // Category Selector
+                Column {
+                    Text(
+                        text = "Kategori Acara",
+                        color = HeartsPink,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        categories.forEach { cat ->
+                            val isSelected = category == cat
+                            Surface(
+                                color = if (isSelected) HeartsPink else PremiumMediumGray,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { category = cat }
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = cat,
+                                        color = PremiumWhite,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Outlined Text Fields
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Nama Acara") },
+                    placeholder = { Text("cth: Gathering Akbar Hearts2Hearts") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = HeartsPink,
+                        unfocusedBorderColor = PremiumMediumGray,
+                        focusedLabelColor = HeartsPink,
+                        unfocusedLabelColor = PremiumLightGray,
+                        focusedTextColor = PremiumWhite,
+                        unfocusedTextColor = PremiumWhite,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                OutlinedTextField(
+                    value = desc,
+                    onValueChange = { desc = it },
+                    label = { Text("Deskripsi") },
+                    placeholder = { Text("cth: Kumpul bareng sesama fans, sharing merchandise...") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = HeartsPink,
+                        unfocusedBorderColor = PremiumMediumGray,
+                        focusedLabelColor = HeartsPink,
+                        unfocusedLabelColor = PremiumLightGray,
+                        focusedTextColor = PremiumWhite,
+                        unfocusedTextColor = PremiumWhite,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = { date = it },
+                    label = { Text("Tanggal & Waktu") },
+                    placeholder = { Text("cth: 25 Juli 2026, 14:00 WIB") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = HeartsPink,
+                        unfocusedBorderColor = PremiumMediumGray,
+                        focusedLabelColor = HeartsPink,
+                        unfocusedLabelColor = PremiumLightGray,
+                        focusedTextColor = PremiumWhite,
+                        unfocusedTextColor = PremiumWhite,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    label = { Text("Lokasi / Venue") },
+                    placeholder = { Text("cth: Cafe Ceria, Blok M Jakarta") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = HeartsPink,
+                        unfocusedBorderColor = PremiumMediumGray,
+                        focusedLabelColor = HeartsPink,
+                        unfocusedLabelColor = PremiumLightGray,
+                        focusedTextColor = PremiumWhite,
+                        unfocusedTextColor = PremiumWhite,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                OutlinedTextField(
+                    value = formUrl,
+                    onValueChange = { formUrl = it },
+                    label = { Text("Tautan Google Form RSVP (Opsional)") },
+                    placeholder = { Text("https://forms.gle/...") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = HeartsPink,
+                        unfocusedBorderColor = PremiumMediumGray,
+                        focusedLabelColor = HeartsPink,
+                        unfocusedLabelColor = PremiumLightGray,
+                        focusedTextColor = PremiumWhite,
+                        unfocusedTextColor = PremiumWhite,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (title.isNotBlank() && date.isNotBlank() && location.isNotBlank()) {
+                        onConfirm(
+                            title,
+                            desc,
+                            category,
+                            date,
+                            location,
+                            if (formUrl.isBlank()) null else formUrl
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = HeartsPink),
+                enabled = title.isNotBlank() && date.isNotBlank() && location.isNotBlank()
+            ) {
+                Text("Simpan", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Batal", color = PremiumLightGray)
+            }
+        },
+        containerColor = PremiumDarkGray
+    )
 }

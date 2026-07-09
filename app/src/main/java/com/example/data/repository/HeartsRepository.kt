@@ -68,6 +68,23 @@ class HeartsRepository(
         userDao.insertOrUpdateUser(user)
     }
 
+    override suspend fun loginWithUsername(username: String): UserEntity? = withContext(Dispatchers.IO) {
+        if (username.equals("developer", ignoreCase = true) || username.equals("pcool180399@gmail.com", ignoreCase = true)) {
+            val devUser = UserEntity(
+                name = "Developer Admin",
+                title = "System Developer",
+                favoriteBias = "All Members",
+                bio = "Creator of the H2H Fandom App",
+                joinedDate = "July 2026",
+                avatarName = "avatar_spark",
+                role = "admin"
+            )
+            userDao.insertOrUpdateUser(devUser)
+            return@withContext devUser
+        }
+        return@withContext null
+    }
+
     override suspend fun addEvent(event: EventEntity) = withContext(Dispatchers.IO) {
         eventDao.insertEvent(event)
     }

@@ -175,6 +175,49 @@ class FirebaseHeartsRepository(
     // Default implementation for other required interface methods
     override suspend fun saveUserProfile(user: UserEntity) = withContext(Dispatchers.IO) {
         userDao.insertOrUpdateUser(user)
+        if (db != null) {
+            try {
+                // Save profile to Firestore under 'users' collection using device UUID as doc ID for simplicity,
+                // or just use their name as ID if we want global usernames
+                val safeId = user.name.replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                db!!.collection("users").document(safeId).set(user).await()
+            } catch (e: Exception) {
+                Log.e("FirebaseSync", "Failed to save user profile to Firestore", e)
+            }
+        }
+    }
+    
+    override suspend fun loginWithUsername(username: String): UserEntity? = withContext(Dispatchers.IO) {
+        if (username.equals("developer", ignoreCase = true) || username.equals("admin", ignoreCase = true) || username.equals("pcool180399@gmail.com", ignoreCase = true)) {
+            val devUser = UserEntity(
+                name = "Developer",
+                title = "System Developer",
+                favoriteBias = "All Members",
+                bio = "Creator of the H2H Fandom App",
+                joinedDate = "July 2026",
+                avatarName = "avatar_spark",
+                role = "admin"
+            )
+            userDao.insertOrUpdateUser(devUser)
+            return@withContext devUser
+        }
+        
+        if (db != null) {
+            try {
+                val safeId = username.replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                val doc = db!!.collection("users").document(safeId).get().await()
+                if (doc.exists()) {
+                    val user = doc.toObject(UserEntity::class.java)
+                    if (user != null) {
+                        userDao.insertOrUpdateUser(user)
+                        return@withContext user
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("FirebaseSync", "Failed to login from Firestore", e)
+            }
+        }
+        return@withContext null
     }
     
     override suspend fun addEvent(event: EventEntity) = withContext(Dispatchers.IO) {

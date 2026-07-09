@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.shape.CircleShape
 import com.example.R
 
@@ -44,8 +45,8 @@ fun MainScreen(viewModel: HeartsViewModel) {
             ) {
                 Spacer(Modifier.height(16.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-                    coil.compose.AsyncImage(
-                        model = "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/logo.jpg",
+                    Image(
+                        painter = painterResource(id = R.drawable.img_logo),
                         contentDescription = "App Logo",
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                         modifier = Modifier
@@ -122,21 +123,30 @@ fun MainScreen(viewModel: HeartsViewModel) {
             val homeViewModel: com.example.ui.viewmodel.HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = com.example.ui.viewmodel.HomeViewModel.Factory)
             val nearestEvent by homeViewModel.nearestEvent.collectAsStateWithLifecycle()
 
-            Column(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-            ) {
-                if (currentTab == "home") {
-                    nearestEvent?.let { event ->
-                        NearestEventBanner(
-                            event = event,
-                            onActionClick = { viewModel.selectTab("events") }
-                        )
+            Box(modifier = Modifier.fillMaxSize()) {
+                Image(
+                    painter = painterResource(id = R.drawable.img_info_bg),
+                    contentDescription = "App Background",
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize().alpha(0.3f)
+                )
+                Box(modifier = Modifier.fillMaxSize().background(PremiumBlack.copy(alpha = 0.6f)))
+                
+                Column(
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .fillMaxSize()
+                ) {
+                    if (currentTab == "home") {
+                        nearestEvent?.let { event ->
+                            NearestEventBanner(
+                                event = event,
+                                onActionClick = { viewModel.selectTab("events") }
+                            )
+                        }
                     }
-                }
 
-                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                     AnimatedContent(
                     targetState = currentTab,
                     transitionSpec = {
@@ -181,6 +191,7 @@ fun MainScreen(viewModel: HeartsViewModel) {
                     }
                 }
             }
+                }
         }
     }
 }

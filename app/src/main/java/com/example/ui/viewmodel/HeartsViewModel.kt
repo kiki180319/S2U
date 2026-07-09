@@ -270,11 +270,18 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
                 )
             }
 
-            val modelName = _chatModel.value
+            val selectedModelName = _chatModel.value
+            val apiModelName = when (selectedModelName) {
+                "gemini-3.1-flash-lite-preview" -> "gemini-1.5-flash"
+                "gemini-3.5-flash" -> "gemini-1.5-flash"
+                "gemini-3.1-pro-preview" -> "gemini-1.5-pro"
+                else -> "gemini-1.5-flash"
+            }
+            
             var config: GenerationConfig? = null
             var toolsList: List<Tool>? = null
 
-            when (modelName) {
+            when (selectedModelName) {
                 "gemini-3.1-flash-lite-preview" -> {
                     config = GenerationConfig(temperature = 0.7f)
                 }
@@ -282,10 +289,7 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
                     toolsList = listOf(Tool(googleSearch = emptyMap()))
                 }
                 "gemini-3.1-pro-preview" -> {
-                    config = GenerationConfig(
-                        thinkingConfig = ThinkingConfig(thinkingLevel = "HIGH"),
-                        temperature = 0.7f
-                    )
+                    config = GenerationConfig(temperature = 0.7f)
                 }
             }
 
@@ -298,7 +302,7 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
 
             try {
                 withContext(Dispatchers.IO) {
-                    val response = GeminiApiClient.service.generateContent(modelName, apiKey, request)
+                    val response = GeminiApiClient.service.generateContent(apiModelName, apiKey, request)
                     val candidate = response.candidates?.firstOrNull()
                     val text = candidate?.content?.parts?.firstOrNull()?.text ?: "Maaf, saya tidak menerima jawaban kosong dari model. Silakan coba lagi!"
                     
@@ -720,6 +724,25 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
             // Refresh currently viewed thread if open
             if (_selectedThread.value?.id == thread.id) {
                 _selectedThread.value = thread.copy(isUpvoted = newIsUpvoted, upvotes = newUpvotes)
+            }
+        }
+    }
+
+
+    fun login(username: String) {
+        viewModelScope.launch {
+            try {
+                _isProfileLoading.value = true
+                val success = repository.loginWithUsername(username)
+                if (success == null) {
+                    _profileError.value = "Pengguna '$username' tidak ditemukan. Silakan buat profil."
+                } else {
+                    _profileError.value = null
+                }
+            } catch (e: Exception) {
+                _profileError.value = "Gagal login: ${e.message}"
+            } finally {
+                _isProfileLoading.value = false
             }
         }
     }

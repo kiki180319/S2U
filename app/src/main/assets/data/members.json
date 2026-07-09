@@ -2,7 +2,7 @@
   {
     "stageName": "Jiwoo",
     "fullName": "Choi Ji-woo",
-    "nativeName": "\ucd5c\uc9c0\uc6b0",
+    "nativeName": "최지우",
     "birthday": "2006-09-07",
     "position": "Leader, Dancer, Rapper",
     "heightCm": 169.0,
@@ -10,7 +10,7 @@
     "mbti": "ISTJ",
     "birthplace": "Seoul, South Korea",
     "nationality": "South Korean",
-    "imageUrl": "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/jiwoo.jpg"
+    "imageUrl": "file:///android_asset/data/images/jiwoo.jpg"
   },
   {
     "stageName": "Carmen",
@@ -23,12 +23,12 @@
     "mbti": "ENFJ",
     "birthplace": "Denpasar, Bali, Indonesia",
     "nationality": "Indonesian",
-    "imageUrl": "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/carmen.jpeg"
+    "imageUrl": "file:///android_asset/data/images/carmen.jpeg"
   },
   {
     "stageName": "Yuha",
     "fullName": "Yu Ha-ram",
-    "nativeName": "\uc720\ud558\ub78c",
+    "nativeName": "유하람",
     "birthday": "2007-04-12",
     "position": "Main Vocalist, Lead Dancer",
     "heightCm": 164.0,
@@ -36,12 +36,12 @@
     "mbti": "INTJ",
     "birthplace": "Wonju, Gangwon-do, South Korea",
     "nationality": "South Korean",
-    "imageUrl": "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/yuha.webp"
+    "imageUrl": "file:///android_asset/data/images/yuha.webp"
   },
   {
     "stageName": "Stella",
     "fullName": "Kim Da-hyun",
-    "nativeName": "\uae40\ub2e4\ud604",
+    "nativeName": "김다현",
     "birthday": "2007-06-18",
     "position": "Vocalist, Visual",
     "heightCm": 168.5,
@@ -49,12 +49,12 @@
     "mbti": "INFP",
     "birthplace": "Ulsan, South Korea",
     "nationality": "South Korean / Canadian",
-    "imageUrl": "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/stella.jpg"
+    "imageUrl": "file:///android_asset/data/images/stella.jpg"
   },
   {
     "stageName": "Juun",
     "fullName": "Kim Ju-eun",
-    "nativeName": "\uae40\uc8fc\uc740",
+    "nativeName": "김주은",
     "birthday": "2008-12-03",
     "position": "Vocalist",
     "heightCm": 166.0,
@@ -62,12 +62,12 @@
     "mbti": "ISFJ",
     "birthplace": "Ilsan, Gyeonggi-do, South Korea",
     "nationality": "South Korean",
-    "imageUrl": "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/juun.png"
+    "imageUrl": "file:///android_asset/data/images/juun.png"
   },
   {
     "stageName": "A-na",
     "fullName": "Roh Yu-na",
-    "nativeName": "\ub178\uc720\ub098",
+    "nativeName": "노유나",
     "birthday": "2008-12-20",
     "position": "Rapper, Dancer",
     "heightCm": 171.0,
@@ -75,12 +75,12 @@
     "mbti": "ESFP",
     "birthplace": "Suwon, Gyeonggi-do, South Korea",
     "nationality": "South Korean",
-    "imageUrl": "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/ana.jpeg"
+    "imageUrl": "file:///android_asset/data/images/ana.jpeg"
   },
   {
     "stageName": "Ian",
     "fullName": "Jeong Lee-an",
-    "nativeName": "\uc815\uc774\uc548",
+    "nativeName": "정이안",
     "birthday": "2009-10-09",
     "position": "Vocalist, Dancer",
     "heightCm": 164.0,
@@ -88,12 +88,12 @@
     "mbti": "ENFP",
     "birthplace": "Seoul, South Korea",
     "nationality": "South Korean",
-    "imageUrl": "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/ian.jpeg"
+    "imageUrl": "file:///android_asset/data/images/ian.jpeg"
   },
   {
     "stageName": "Ye-on",
     "fullName": "Kim Na-yeon",
-    "nativeName": "\uae40\ub098\uc5f0",
+    "nativeName": "김나연",
     "birthday": "2010-04-19",
     "position": "Vocalist, Maknae",
     "heightCm": 166.0,
@@ -101,6 +101,6 @@
     "mbti": "INFJ",
     "birthplace": "Yangsan, Gyeongsangnam-do, South Korea",
     "nationality": "South Korean",
-    "imageUrl": "https://raw.githubusercontent.com/kiki180319/S2U/main/assets/.aistudio/yeon.jpg"
+    "imageUrl": "file:///android_asset/data/images/yeon.jpg"
   }
 ]

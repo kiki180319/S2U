@@ -68,6 +68,7 @@ fun ProfileScreen(viewModel: HeartsViewModel) {
     var cacheSize by remember { mutableStateOf("124 MB") }
 
     var showCreateProfile by remember { mutableStateOf(false) }
+    var showLoginDialog by remember { mutableStateOf(false) }
     var showUsernameDialog by remember { mutableStateOf(false) }
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
@@ -101,13 +102,31 @@ fun ProfileScreen(viewModel: HeartsViewModel) {
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = { showCreateProfile = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = HeartsPink)
-                ) {
-                    Text("Login / Buat Profil", color = PremiumWhite)
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Button(
+                        onClick = { showLoginDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = PremiumDarkGray)
+                    ) {
+                        Text("Login", color = PremiumWhite)
+                    }
+                    Button(
+                        onClick = { showCreateProfile = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = HeartsPink)
+                    ) {
+                        Text("Buat Profil Baru", color = PremiumWhite)
+                    }
                 }
             }
+        }
+        
+        if (showLoginDialog) {
+            LoginDialog(
+                onDismiss = { showLoginDialog = false },
+                onLogin = { username ->
+                    viewModel.login(username)
+                    showLoginDialog = false
+                }
+            )
         }
         
         if (showCreateProfile) {
@@ -208,7 +227,7 @@ fun ProfileScreen(viewModel: HeartsViewModel) {
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = "OFFLINE",
+                                text = "BELUM ADA SIARAN",
                                 color = PremiumLightGray,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Normal,
@@ -1009,4 +1028,53 @@ fun SettingsInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label
         }
         Text(value, color = PremiumLightGray, fontSize = 14.sp)
     }
+}
+
+
+@Composable
+fun LoginDialog(
+    onDismiss: () -> Unit,
+    onLogin: (String) -> Unit
+) {
+    var username by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = PremiumDarkGray,
+        title = { Text("Login", color = PremiumWhite, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Masukkan username Anda:", color = PremiumLightGray, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text("Username", color = PremiumLightGray) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = HeartsPink,
+                        unfocusedBorderColor = PremiumMediumGray,
+                        focusedTextColor = PremiumWhite,
+                        unfocusedTextColor = PremiumWhite
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Developer? Gunakan username 'developer' atau 'pcool180399@gmail.com'.", color = PremiumMediumGray, fontSize = 11.sp)
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { if (username.isNotBlank()) onLogin(username.trim()) },
+                colors = ButtonDefaults.buttonColors(containerColor = HeartsPink)
+            ) {
+                Text("Masuk", color = PremiumWhite)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Batal", color = PremiumLightGray)
+            }
+        }
+    )
 }

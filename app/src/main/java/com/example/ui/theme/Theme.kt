@@ -11,17 +11,17 @@ import androidx.compose.ui.unit.dp
 
 private val iOSDarkColorScheme = darkColorScheme(
     primary = HeartsPink,
-    secondary = PremiumLightGray,
-    tertiary = PremiumWhite,
-    background = PremiumBlack,
-    surface = PremiumDarkGray,
-    surfaceVariant = PremiumMediumGray,
+    secondary = BaseLightGray,
+    tertiary = BaseWhite,
+    background = BaseBlack,
+    surface = BaseDarkGray,
+    surfaceVariant = BaseMediumGray,
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onTertiary = PremiumWhite,
-    onBackground = PremiumWhite,
-    onSurface = PremiumWhite,
-    onSurfaceVariant = PremiumLightGray
+    onTertiary = BaseWhite,
+    onBackground = BaseWhite,
+    onSurface = BaseWhite,
+    onSurfaceVariant = BaseLightGray
 )
 
 private val iOSLightColorScheme = lightColorScheme(
@@ -41,32 +41,32 @@ private val iOSLightColorScheme = lightColorScheme(
 
 private val iOSIndigoColorScheme = darkColorScheme(
     primary = Color(0xFF5856D6), // iOS Indigo
-    secondary = PremiumLightGray,
-    tertiary = PremiumWhite,
+    secondary = BaseLightGray,
+    tertiary = BaseWhite,
     background = Color(0xFF0A0A16),
     surface = Color(0xFF1A1A2E),
     surfaceVariant = Color(0xFF16213E),
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onTertiary = PremiumWhite,
-    onBackground = PremiumWhite,
-    onSurface = PremiumWhite,
-    onSurfaceVariant = PremiumLightGray
+    onTertiary = BaseWhite,
+    onBackground = BaseWhite,
+    onSurface = BaseWhite,
+    onSurfaceVariant = BaseLightGray
 )
 
 private val iOSForestColorScheme = darkColorScheme(
     primary = Color(0xFF30D158), // iOS Mint/Green
-    secondary = PremiumLightGray,
-    tertiary = PremiumWhite,
+    secondary = BaseLightGray,
+    tertiary = BaseWhite,
     background = Color(0xFF041410),
     surface = Color(0xFF0F2C24),
     surfaceVariant = Color(0xFF1C3D32),
     onPrimary = Color.Black,
     onSecondary = Color.White,
-    onTertiary = PremiumWhite,
-    onBackground = PremiumWhite,
-    onSurface = PremiumWhite,
-    onSurfaceVariant = PremiumLightGray
+    onTertiary = BaseWhite,
+    onBackground = BaseWhite,
+    onSurface = BaseWhite,
+    onSurfaceVariant = BaseLightGray
 )
 
 val iOSShapes = Shapes(

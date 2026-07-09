@@ -17,6 +17,7 @@ interface IHeartsRepository {
     fun getThreadById(threadId: Int): Flow<ForumEntity?>
 
     suspend fun saveUserProfile(user: UserEntity)
+    suspend fun loginWithUsername(username: String): UserEntity?
     suspend fun addEvent(event: EventEntity)
     suspend fun updateEvent(event: EventEntity)
     suspend fun addEventComment(comment: EventCommentEntity)

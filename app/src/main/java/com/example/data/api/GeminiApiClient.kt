@@ -1,5 +1,6 @@
 package com.example.data.api
 
+import com.squareup.moshi.Json
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
@@ -21,23 +22,23 @@ data class Content(
 )
 
 data class Tool(
-    val googleSearch: Map<String, String>? = null
+    @Json(name = "google_search") val googleSearch: Map<String, String>? = null
 )
 
 data class ThinkingConfig(
-    val thinkingLevel: String
+    @Json(name = "thinking_budget") val thinkingBudget: Int? = null
 )
 
 data class GenerationConfig(
-    val thinkingConfig: ThinkingConfig? = null,
-    val maxOutputTokens: Int? = null,
+    @Json(name = "thinking_config") val thinkingConfig: ThinkingConfig? = null,
+    @Json(name = "max_output_tokens") val maxOutputTokens: Int? = null,
     val temperature: Float? = null
 )
 
 data class GenerateContentRequest(
     val contents: List<Content>,
-    val systemInstruction: Content? = null,
-    val generationConfig: GenerationConfig? = null,
+    @Json(name = "system_instruction") val systemInstruction: Content? = null,
+    @Json(name = "generation_config") val generationConfig: GenerationConfig? = null,
     val tools: List<Tool>? = null
 )
 
@@ -51,13 +52,13 @@ data class GroundingChunk(
 )
 
 data class GroundingMetadata(
-    val webSearchQueries: List<String>? = null,
-    val groundingChunks: List<GroundingChunk>? = null
+    @Json(name = "webSearchQueries") val webSearchQueries: List<String>? = null,
+    @Json(name = "groundingChunks") val groundingChunks: List<GroundingChunk>? = null
 )
 
 data class Candidate(
     val content: Content?,
-    val groundingMetadata: GroundingMetadata? = null
+    @Json(name = "groundingMetadata") val groundingMetadata: GroundingMetadata? = null
 )
 
 data class GenerateContentResponse(

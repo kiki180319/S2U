@@ -94,7 +94,7 @@ fun LiveRoomScreen(
                             maxLines = 1
                         )
                         Text(
-                            text = if (session?.isActive == true) "LIVE NOW" else "OFFLINE",
+                            text = if (session?.isActive == true) "LIVE NOW" else "SIARAN TIDAK AKTIF",
                             color = if (session?.isActive == true) StatusGreen else PremiumLightGray,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
@@ -403,9 +403,16 @@ fun HeartsStreamPlayer(
     videoUrl: String,
     modifier: Modifier = Modifier
 ) {
+    val isYoutube = videoUrl.contains("youtube.com", ignoreCase = true) || videoUrl.contains("youtu.be", ignoreCase = true)
     val isHls = videoUrl.contains(".m3u8", ignoreCase = true) || videoUrl.contains("/hls/", ignoreCase = true)
     
-    if (isHls) {
+    if (isYoutube) {
+        val videoId = extractYoutubeVideoId(videoUrl)
+        YouTubePlayer(
+            youtubeVideoId = videoId,
+            modifier = modifier
+        )
+    } else if (isHls) {
         val context = LocalContext.current
         val exoPlayer = remember(videoUrl) {
             ExoPlayer.Builder(context).build().apply {

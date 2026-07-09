@@ -12,6 +12,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
+
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -22,6 +28,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.alpha
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.HeartsViewModel
 
@@ -33,14 +43,24 @@ fun InfoCenterScreen(viewModel: HeartsViewModel) {
         currentSubScreen = "dashboard"
     }
 
-    Crossfade(targetState = currentSubScreen, label = "InfoCenterTransition") { screen ->
-        when (screen) {
-            "dashboard" -> InfoDashboard(onNavigate = { currentSubScreen = it })
-            "group_profile" -> GroupProfileScreen(onBack = { currentSubScreen = "dashboard" })
-            "members" -> MembersScreen(onBack = { currentSubScreen = "dashboard" })
-            "discography" -> DiscographyScreen(onBack = { currentSubScreen = "dashboard" })
-            "fanguide" -> FanGuideScreen(onBack = { currentSubScreen = "dashboard" })
-            else -> InfoDashboard(onNavigate = { currentSubScreen = it })
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = com.example.R.drawable.img_info_bg),
+            contentDescription = "Background",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize()
+        )
+        Box(modifier = Modifier.matchParentSize().background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)))
+
+        Crossfade(targetState = currentSubScreen, label = "InfoCenterTransition") { screen ->
+            when (screen) {
+                "dashboard" -> InfoDashboard(onNavigate = { currentSubScreen = it })
+                "group_profile" -> GroupProfileScreen(onBack = { currentSubScreen = "dashboard" })
+                "members" -> MembersScreen(onBack = { currentSubScreen = "dashboard" })
+                "discography" -> DiscographyScreen(onBack = { currentSubScreen = "dashboard" })
+                "fanguide" -> FanGuideScreen(onBack = { currentSubScreen = "dashboard" })
+                else -> InfoDashboard(onNavigate = { currentSubScreen = it })
+            }
         }
     }
 }
@@ -86,7 +106,9 @@ fun InfoDashboard(onNavigate: (String) -> Unit) {
                 unfocusedBorderColor = PremiumMediumGray,
                 focusedTextColor = PremiumWhite,
                 unfocusedTextColor = PremiumWhite,
-                cursorColor = HeartsPink
+                cursorColor = HeartsPink,
+                focusedContainerColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f),
+                unfocusedContainerColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)
             ),
             shape = RoundedCornerShape(24.dp)
         )
@@ -107,7 +129,7 @@ fun InfoDashboard(onNavigate: (String) -> Unit) {
                                     else -> {} 
                                 }
                             },
-                            colors = CardDefaults.cardColors(containerColor = PremiumDarkGray),
+                            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -125,20 +147,34 @@ fun InfoDashboard(onNavigate: (String) -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
+                // InfoSection definitions
                 val sections = listOf(
-                    Pair("Group Profile", "group_profile"),
-                    Pair("Members", "members"),
-                    Pair("Discography", "discography"),
-                    Pair("Fan Guide", "fanguide")
+                    Triple("Group Profile", "group_profile", Pair(androidx.compose.material.icons.Icons.Default.Info, androidx.compose.ui.graphics.Color.Red)),
+                    Triple("Members", "members", Pair(androidx.compose.material.icons.Icons.Default.Person, androidx.compose.ui.graphics.Color.Blue)),
+                    Triple("Discography", "discography", Pair(androidx.compose.material.icons.Icons.Default.PlayArrow, androidx.compose.ui.graphics.Color(0xFFFFA500))),
+                    Triple("Fan Guide", "fanguide", Pair(androidx.compose.material.icons.Icons.Default.Star, androidx.compose.ui.graphics.Color.Green))
                 )
                 items(sections.size) { index ->
                     val section = sections[index]
                     Card(
                         modifier = Modifier.height(120.dp).clickable { onNavigate(section.second) },
-                        colors = CardDefaults.cardColors(containerColor = PremiumDarkGray),
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.BottomStart) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(16.dp),
+                            verticalArrangement = Arrangement.Top,
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(section.third.second, RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(section.third.first, contentDescription = section.first, tint = PremiumWhite, modifier = Modifier.size(24.dp))
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
                             Text(section.first, color = PremiumWhite, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                     }
@@ -196,7 +232,7 @@ fun GroupProfileScreen(onBack: () -> Unit) {
                                     context.startActivity(intent)
                                 } catch (e: Exception) { }
                             },
-                        colors = CardDefaults.cardColors(containerColor = PremiumDarkGray),
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -224,11 +260,11 @@ fun DiscographyScreen(onBack: () -> Unit) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = PremiumDarkGray),
+                    colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Box(modifier = Modifier.fillMaxWidth().height(150.dp).background(PremiumMediumGray), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxWidth().height(150.dp).background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
                             Text("THE CHASE", color = PremiumWhite, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(12.dp))

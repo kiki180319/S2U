@@ -17,7 +17,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -79,24 +82,41 @@ fun MembersScreen(onBack: () -> Unit) {
     val membersList = remember { loadMembers(context) }
     var selectedMember by remember { mutableStateOf<MemberProfile?>(null) }
 
-    AnimatedContent(targetState = selectedMember, label = "MemberScreenTransition") { member ->
-        if (member != null) {
-            MemberDetailScreen(member = member, onBack = { selectedMember = null })
-        } else {
-            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = PremiumWhite) }
-                    Text("Members Profile", color = PremiumWhite, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(membersList) { m ->
-                        MemberCard(member = m, onClick = { selectedMember = m })
+    Box(modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Transparent)) {
+
+        AnimatedContent(targetState = selectedMember, label = "MemberScreenTransition") { member ->
+            if (member != null) {
+                MemberDetailScreen(member = member, onBack = { selectedMember = null })
+            } else {
+                Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = PremiumWhite) }
+                        Text("Members Profile", color = PremiumWhite, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        items(membersList) { m ->
+                            MemberCard(member = m, onClick = { selectedMember = m })
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+fun getMemberImageId(stageName: String): Int {
+    return when (stageName.lowercase()) {
+        "jiwoo" -> com.example.R.drawable.img_jiwoo
+        "carmen" -> com.example.R.drawable.img_carmen
+        "yuha" -> com.example.R.drawable.img_yuha
+        "stella" -> com.example.R.drawable.img_stella
+        "juun" -> com.example.R.drawable.img_juun
+        "a-na" -> com.example.R.drawable.img_ana
+        "ian" -> com.example.R.drawable.img_ian
+        "ye-on" -> com.example.R.drawable.img_yeon
+        else -> com.example.R.drawable.img_logo
     }
 }
 
@@ -106,19 +126,19 @@ fun MemberCard(member: MemberProfile, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = PremiumDarkGray),
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = member.imageUrl,
+                Image(
+                    painter = painterResource(id = getMemberImageId(member.stageName)),
                     contentDescription = member.stageName,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(PremiumMediumGray)
+                        
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -142,14 +162,14 @@ fun MemberDetailScreen(member: MemberProfile, onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(24.dp))
         
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            AsyncImage(
-                model = member.imageUrl,
+            Image(
+                painter = painterResource(id = getMemberImageId(member.stageName)),
                 contentDescription = member.stageName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(200.dp)
                     .clip(CircleShape)
-                    .background(PremiumMediumGray)
+                    
             )
         }
         
@@ -157,7 +177,7 @@ fun MemberDetailScreen(member: MemberProfile, onBack: () -> Unit) {
         
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = PremiumDarkGray),
+            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)),
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
