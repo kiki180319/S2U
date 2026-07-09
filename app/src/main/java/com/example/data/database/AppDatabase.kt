@@ -16,7 +16,7 @@ import androidx.room.RoomDatabase
         EventAttendeeEntity::class,
         CommunityUpdateEntity::class
     ],
-    version = 5,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

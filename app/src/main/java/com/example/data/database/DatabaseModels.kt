@@ -17,7 +17,9 @@ data class UserEntity(
     val instagramUrl: String? = null,
     val youtubeUrl: String? = null,
     val tiktokUrl: String? = null,
-    val role: String = "user"
+    val role: String = "user",
+    val isLive: Boolean = false,
+    val currentStreamId: String? = null
 )
 
 @Entity(tableName = "event_comments")
@@ -51,7 +53,9 @@ data class EventEntity(
     val organizer: String,
     val joinedCount: Int = 0,
     val isJoined: Boolean = false,
-    val customFormUrl: String? = null
+    val customFormUrl: String? = null,
+    val timestamp: Long = 0L,
+    val createdBy: String = ""
 )
 
 @Entity(tableName = "forum_threads")
@@ -74,6 +78,7 @@ data class CommentEntity(
     val author: String,
     val authorTitle: String,
     val content: String,
+    val stickerId: String? = null,
     val timestamp: Long = System.currentTimeMillis()
 )
 
@@ -98,4 +103,23 @@ data class CommunityUpdateEntity(
     val sourceUrl: String? = null,
     val thumbnailUrl: String? = null,
     val isPinned: Boolean = false
+)
+
+data class LiveStreamSession(
+    val streamId: String = "",
+    val hostUserId: String = "",
+    val title: String = "",
+    val streamUrl: String = "",
+    val viewerCount: Int = 0,
+    val chatParticipantCount: Int = 0,
+    val isActive: Boolean = false
+)
+
+data class LiveChatMessage(
+    val id: String = "",
+    val streamId: String = "",
+    val senderName: String = "",
+    val senderRole: String = "",
+    val text: String = "",
+    val timestamp: Long = System.currentTimeMillis()
 )

@@ -16,6 +16,8 @@ import com.example.data.database.VideoEntity
 import com.example.data.database.EventCommentEntity
 import com.example.data.database.EventAttendeeEntity
 import com.example.data.database.CommunityUpdateEntity
+import com.example.data.database.LiveStreamSession
+import com.example.data.database.LiveChatMessage
 import com.example.data.repository.HeartsRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -43,10 +45,42 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
     // Current Tab
     private val _currentTab = MutableStateFlow("home")
     val currentTab: StateFlow<String> = _currentTab.asStateFlow()
+
+    // Current Theme
+    private val _currentTheme = MutableStateFlow(
+        try {
+            HeartsApplication.instance.getSharedPreferences("hearts_prefs", android.content.Context.MODE_PRIVATE)
+                .getString("theme_name", "ios_dark") ?: "ios_dark"
+        } catch (e: Exception) {
+            "ios_dark"
+        }
+    )
+    val currentTheme: StateFlow<String> = _currentTheme.asStateFlow()
+
+    fun selectTheme(theme: String) {
+        _currentTheme.value = theme
+        try {
+            HeartsApplication.instance.getSharedPreferences("hearts_prefs", android.content.Context.MODE_PRIVATE)
+                .edit()
+                .putString("theme_name", theme)
+                .apply()
+        } catch (e: Exception) {
+            // Safe fallback during tests or initialization
+        }
+    }
+
     val isAdmin: StateFlow<Boolean> = repository.userProfile.map { it?.role == "admin" }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    // RSS Feed State
+    private val _isRssLoading = MutableStateFlow(false)
+    val isRssLoading: StateFlow<Boolean> = _isRssLoading.asStateFlow()
+
+    private val _rssError = MutableStateFlow<String?>(null)
+    val rssError: StateFlow<String?> = _rssError.asStateFlow()
 
     init {
         fetchAndSaveFcmToken()
+        fetchRssUpdates()
     }
 
     private fun fetchAndSaveFcmToken() {
@@ -171,6 +205,9 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
     private val _chatLoading = MutableStateFlow(false)
     val chatLoading: StateFlow<Boolean> = _chatLoading.asStateFlow()
 
+    private val _chatError = MutableStateFlow<String?>(null)
+    val chatError: StateFlow<String?> = _chatError.asStateFlow()
+
     private val _chatModel = MutableStateFlow("gemini-3.5-flash") // Default is gemini-3.5-flash (with grounding)
     val chatModel: StateFlow<String> = _chatModel.asStateFlow()
 
@@ -187,10 +224,16 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
 
     fun clearChat() {
         _chatMessages.value = emptyList()
+        _chatError.value = null
+    }
+
+    fun clearChatError() {
+        _chatError.value = null
     }
 
     fun sendMessageToChatbot(userMessage: String) {
         if (userMessage.isBlank()) return
+        _chatError.value = null
         
         val updatedList = _chatMessages.value.toMutableList()
         updatedList.add(ChatMessage("user", userMessage))
@@ -254,32 +297,55 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
             )
 
             try {
-                val response = GeminiApiClient.service.generateContent(modelName, apiKey, request)
-                val candidate = response.candidates?.firstOrNull()
-                val text = candidate?.content?.parts?.firstOrNull()?.text ?: "Maaf, saya tidak menerima jawaban kosong dari model. Silakan coba lagi!"
-                
-                val searchSources = mutableListOf<Pair<String, String>>()
-                candidate?.groundingMetadata?.let { metadata ->
-                    metadata.groundingChunks?.forEach { chunk ->
-                        val web = chunk.web
-                        if (web != null && !web.title.isNullOrBlank() && !web.uri.isNullOrBlank()) {
-                            searchSources.add(Pair(web.title, web.uri))
+                withContext(Dispatchers.IO) {
+                    val response = GeminiApiClient.service.generateContent(modelName, apiKey, request)
+                    val candidate = response.candidates?.firstOrNull()
+                    val text = candidate?.content?.parts?.firstOrNull()?.text ?: "Maaf, saya tidak menerima jawaban kosong dari model. Silakan coba lagi!"
+                    
+                    val searchSources = mutableListOf<Pair<String, String>>()
+                    candidate?.groundingMetadata?.let { metadata ->
+                        metadata.groundingChunks?.forEach { chunk ->
+                            val web = chunk.web
+                            if (web != null && !web.title.isNullOrBlank() && !web.uri.isNullOrBlank()) {
+                                searchSources.add(Pair(web.title, web.uri))
+                            }
                         }
                     }
-                }
 
-                val finalMessages = _chatMessages.value.toMutableList()
-                finalMessages.add(
-                    ChatMessage(
-                        sender = "model",
-                        text = text,
-                        searchSources = if (searchSources.isNotEmpty()) searchSources.distinct() else null
+                    val finalMessages = _chatMessages.value.toMutableList()
+                    finalMessages.add(
+                        ChatMessage(
+                            sender = "model",
+                            text = text,
+                            searchSources = if (searchSources.isNotEmpty()) searchSources.distinct() else null
+                        )
                     )
-                )
-                _chatMessages.value = finalMessages
+                    _chatMessages.value = finalMessages
+                }
             } catch (e: Exception) {
+                Log.e("HeartsViewModel", "Gemini API error", e)
+                val errorMsg = e.message ?: ""
+                
+                val fallbackResponseText = when (_chatPersona.value) {
+                    "scholar" -> "🎓 [Companion Cadangan]: Teori Lore H2H terdeteksi sangat ramai didiskusikan! Saat ini jaringan server sedang sibuk, silakan coba lagi nanti. Untuk saat ini, teori fiksi ilmiah Hearts2Hearts tentang perjalanan waktu di MV 'Eclipse of Hearts' terus memukau kita semua!"
+                    "songwriter" -> "📝 [Companion Cadangan]: Inspirasi musik di fanbase sedang memuncak! Karena server sedang sibuk, berikut chant penyemangat cadangan: 'Hearts2Hearts di dada, fans setia membara, H2H jaya!' Mari coba lagi beberapa saat lagi."
+                    else -> "💖 [Companion Cadangan]: Halo kak! Maaf ya, jaringan sedang padat merayap seperti antrean konser H2H. Aku mau ngingetin kamu buat tetep semangat hari ini, dengerin lagu-lagu kita, dan minum air putih yang cukup ya! Kita bincang-bincang lagi sebentar lagi!"
+                }
+                
+                val friendlyErrorText = if (errorMsg.contains("API key", ignoreCase = true) || errorMsg.contains("400", ignoreCase = true)) {
+                    "⚠️ Layanan AI Companion mengalami kendala karena API Key tidak valid atau belum diizinkan. Silakan ganti atau tambahkan API Key Anda di panel Secrets, lalu coba lagi!"
+                } else if (errorMsg.contains("quota", ignoreCase = true) || errorMsg.contains("429", ignoreCase = true)) {
+                    "⚠️ Kuota pemanggilan API Gemini saat ini telah habis (Rate Limit Exceeded). $fallbackResponseText"
+                } else if (errorMsg.contains("timeout", ignoreCase = true) || errorMsg.contains("connect", ignoreCase = true) || errorMsg.contains("Host", ignoreCase = true)) {
+                    "⚠️ Koneksi internet lambat atau server sedang sibuk. $fallbackResponseText"
+                } else {
+                    "⚠️ Terjadi kesalahan koneksi atau konfigurasi model ($errorMsg). $fallbackResponseText"
+                }
+                
+                _chatError.value = friendlyErrorText
+                
                 val finalMessages = _chatMessages.value.toMutableList()
-                finalMessages.add(ChatMessage("model", "Terjadi kesalahan koneksi atau konfigurasi model: ${e.message}. Pastikan internet menyala dan coba lagi!"))
+                finalMessages.add(ChatMessage("model", friendlyErrorText))
                 _chatMessages.value = finalMessages
             } finally {
                 _chatLoading.value = false
@@ -320,6 +386,7 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
             }
 
             try {
+                repository.clearLocalData()
                 repository.prepopulateIfEmpty()
             } catch (e: Exception) {
                 Log.e("HeartsViewModel", "Gagal melakukan prepopulate database lokal", e)
@@ -461,7 +528,9 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
                                 organizer = "H2H Official Sheet",
                                 joinedCount = (10..150).random(),
                                 isJoined = false,
-                                customFormUrl = formUrl
+                                customFormUrl = formUrl,
+                                timestamp = System.currentTimeMillis() + (5L * 24 * 3600 * 1000), // 5 days in future
+                                createdBy = "admin"
                             )
                         )
                     }
@@ -521,7 +590,9 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
                     organizer = userProfile.value?.name ?: "H2H_Fan",
                     joinedCount = 1,
                     isJoined = true,
-                    customFormUrl = formUrl
+                    customFormUrl = formUrl,
+                    timestamp = System.currentTimeMillis() + (7L * 24 * 3600 * 1000), // 7 days in future
+                    createdBy = userProfile.value?.name ?: "user"
                 )
             )
         }
@@ -601,8 +672,8 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
     }
 
     // 3. Post a comment to thread
-    fun postComment(threadId: Int, content: String) {
-        if (content.isBlank()) return
+    fun postComment(threadId: Int, content: String, stickerId: String? = null) {
+        if (content.isBlank() && stickerId == null) return
         viewModelScope.launch {
             val user = userProfile.value
             val authorName = user?.name ?: "H2H_Spark"
@@ -612,7 +683,8 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
                     threadId = threadId,
                     author = authorName,
                     authorTitle = user?.title ?: "Senior Fan Club Member",
-                    content = content
+                    content = content,
+                    stickerId = stickerId
                 )
             )
             
@@ -658,6 +730,7 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
         favoriteBias: String,
         bio: String,
         avatarName: String = "avatar_spark",
+        role: String? = null,
         twitterUrl: String? = null,
         instagramUrl: String? = null,
         youtubeUrl: String? = null,
@@ -687,6 +760,7 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
                     bio = bio,
                     joinedDate = current.joinedDate.ifEmpty { "July 2026" },
                     avatarName = avatarName,
+                    role = role ?: current.role,
                     twitterUrl = twitterUrl?.ifBlank { null },
                     instagramUrl = instagramUrl?.ifBlank { null },
                     youtubeUrl = youtubeUrl?.ifBlank { null },
@@ -738,6 +812,156 @@ class HeartsViewModel(private val repository: IHeartsRepository) : ViewModel() {
     fun addCommunityUpdate(update: CommunityUpdateEntity) {
         viewModelScope.launch {
             repository.addUpdate(update)
+        }
+    }
+
+    fun fetchRssUpdates() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRssLoading.value = true
+            _rssError.value = null
+            try {
+                val url = java.net.URL("https://rss.app/feeds/_l68YDDUDJP0aqzMM.xml")
+                val connection = url.openConnection()
+                connection.connectTimeout = 10000
+                connection.readTimeout = 15000
+                val inputStream = connection.getInputStream()
+                
+                val rssParser = RssParser()
+                val parsedPosts = rssParser.parse(inputStream)
+                
+                if (parsedPosts.isNotEmpty()) {
+                    val communityUpdates = parsedPosts.map { post ->
+                        val uniqueId = "rss_" + post.link.hashCode()
+                        val pubDateTimestamp = RssParser.parsePubDate(post.pubDate)
+                        val detectedType = when {
+                            post.link.contains("instagram.com") -> "instagram"
+                            post.link.contains("tiktok.com") -> "tiktok"
+                            post.link.contains("youtube.com") -> "youtube"
+                            post.link.contains("x.com") || post.link.contains("twitter.com") -> "x"
+                            else -> "social_media"
+                        }
+                        
+                        CommunityUpdateEntity(
+                            id = uniqueId,
+                            type = detectedType,
+                            title = post.title,
+                            content = post.description,
+                            timestamp = pubDateTimestamp,
+                            sourceUrl = post.link,
+                            thumbnailUrl = if (post.imageUrl.isNotEmpty()) post.imageUrl else null,
+                            isPinned = false
+                        )
+                    }
+                    
+                    repository.addUpdates(communityUpdates)
+                    Log.d("HeartsViewModel", "Sinkronisasi RSS berhasil memuat ${communityUpdates.size} item baru.")
+                }
+            } catch (e: Exception) {
+                Log.e("HeartsViewModel", "Gagal memuat RSS feed: ${e.message}", e)
+                _rssError.value = "Gagal menyinkronkan feed terbaru: ${e.message}"
+            } finally {
+                _isRssLoading.value = false
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            repository.deleteUserProfile()
+        }
+    }
+
+    fun clearLocalUpdates() {
+        viewModelScope.launch {
+            repository.clearLocalData()
+        }
+    }
+
+    fun deleteThread(id: Int) {
+        viewModelScope.launch {
+            repository.deleteThreadById(id)
+        }
+    }
+
+    fun deleteEvent(id: Int) {
+        viewModelScope.launch {
+            repository.deleteEventById(id)
+        }
+    }
+
+    // Live Streaming & Integrated Live Chat Features
+    val activeLiveSessions: StateFlow<List<LiveStreamSession>> = repository.activeLiveSessions
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _currentLiveStreamId = MutableStateFlow<String?>(null)
+    val currentLiveStreamId: StateFlow<String?> = _currentLiveStreamId.asStateFlow()
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val currentLiveSession: StateFlow<LiveStreamSession?> = _currentLiveStreamId
+        .flatMapLatest { id ->
+            if (id == null) flowOf(null)
+            else repository.getLiveSession(id)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val currentLiveChatMessages: StateFlow<List<LiveChatMessage>> = _currentLiveStreamId
+        .flatMapLatest { id ->
+            if (id == null) flowOf(emptyList())
+            else repository.getLiveChatMessages(id)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun startHostLiveSession(title: String, streamUrl: String) {
+        viewModelScope.launch {
+            val currentUserId = userProfile.value?.id?.toString() ?: "1"
+            val streamId = repository.startLiveSession(
+                hostUserId = currentUserId,
+                title = title,
+                streamUrl = streamUrl
+            )
+            _currentLiveStreamId.value = streamId
+        }
+    }
+
+    fun stopHostLiveSession() {
+        viewModelScope.launch {
+            val streamId = _currentLiveStreamId.value
+            if (streamId != null) {
+                repository.stopLiveSession(streamId)
+                _currentLiveStreamId.value = null
+            }
+        }
+    }
+
+    fun enterLiveRoom(streamId: String) {
+        _currentLiveStreamId.value = streamId
+        viewModelScope.launch {
+            repository.incrementViewerCount(streamId)
+        }
+    }
+
+    fun leaveLiveRoom(streamId: String) {
+        viewModelScope.launch {
+            repository.decrementViewerCount(streamId)
+            if (_currentLiveStreamId.value == streamId) {
+                _currentLiveStreamId.value = null
+            }
+        }
+    }
+
+    fun sendLiveChat(text: String) {
+        val streamId = _currentLiveStreamId.value ?: return
+        val user = userProfile.value
+        val senderName = user?.name ?: "House_Fan"
+        val senderRole = user?.role ?: "user"
+        viewModelScope.launch {
+            repository.sendLiveChatMessage(
+                streamId = streamId,
+                senderName = senderName,
+                text = text,
+                senderRole = senderRole
+            )
         }
     }
 

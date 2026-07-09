@@ -37,10 +37,16 @@ class HeartsApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         container = DefaultAppContainer(this)
         Log.d("HeartsApplication", "HeartsApplication diinisialisasi.")
         
         scheduleBackgroundSync()
+    }
+
+    companion object {
+        lateinit var instance: HeartsApplication
+            private set
     }
 
     private fun scheduleBackgroundSync() {

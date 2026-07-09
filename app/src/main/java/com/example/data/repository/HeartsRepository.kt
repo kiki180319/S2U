@@ -1,8 +1,7 @@
 package com.example.data.repository
 
 import com.example.data.database.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -20,6 +19,7 @@ class HeartsRepository(
 ) : IHeartsRepository {
     override val userProfile: Flow<UserEntity?> = userDao.getUser()
     override val allEvents: Flow<List<EventEntity>> = eventDao.getEvents()
+    override fun getNearestEvent(currentTime: Long): Flow<EventEntity?> = eventDao.getNearestEvent(currentTime)
     override val allThreads: Flow<List<ForumEntity>> = forumDao.getThreads()
     override val allVideos: Flow<List<VideoEntity>> = videoDao.getVideos()
     override val allUpdates: Flow<List<CommunityUpdateEntity>> = communityUpdateDao.getUpdates()
@@ -76,7 +76,7 @@ class HeartsRepository(
         eventDao.updateEvent(event)
     }
 
-    suspend fun deleteEventById(id: Int) = withContext(Dispatchers.IO) {
+    override suspend fun deleteEventById(id: Int) = withContext(Dispatchers.IO) {
         eventDao.deleteEventById(id)
     }
 
@@ -101,9 +101,22 @@ class HeartsRepository(
     }
 
     // Prepopulate database with complete mock data if empty
+    override suspend fun clearLocalData() = withContext(Dispatchers.IO) {
+        communityUpdateDao.clearAllUpdates()
+        // we can clear others if we want, but let's just clear updates for now
+    }
+
+    override suspend fun deleteUserProfile() = withContext(Dispatchers.IO) {
+        userDao.deleteUser()
+    }
+
+    override suspend fun deleteThreadById(id: Int) = withContext(Dispatchers.IO) {
+        forumDao.deleteThreadById(id)
+    }
+
     override suspend fun prepopulateIfEmpty() = withContext(Dispatchers.IO) {
         // 1. User profile
-        val user = userDao.getUser().firstOrNull()
+        val user = userDao.getUserSync()
         if (user == null) {
             userDao.insertOrUpdateUser(
                 UserEntity(
@@ -111,7 +124,7 @@ class HeartsRepository(
                     deviceUuid = java.util.UUID.randomUUID().toString(),
                     name = "H2H_Spark",
                     title = "Senior Fan Club Member",
-                    favoriteBias = "All Members (OT5)",
+                    favoriteBias = "Jiwoo (Leader)",
                     bio = "Pecinta musik Hearts2Hearts sejak rilis single pertama! Senang membantu koordinasi gathering regional.",
                     joinedDate = "July 2026"
                 )
@@ -119,7 +132,7 @@ class HeartsRepository(
         }
 
         // 2. Videos
-        val videos = videoDao.getVideos().firstOrNull()
+        val videos = videoDao.getVideosSync()
         if (videos.isNullOrEmpty()) {
             val defaultVideos = listOf(
                 VideoEntity(
@@ -165,7 +178,7 @@ class HeartsRepository(
         }
 
         // 3. Events
-        val events = eventDao.getEvents().firstOrNull()
+        val events = eventDao.getEventsSync()
         if (events.isNullOrEmpty()) {
             val defaultEvents = listOf(
                 EventEntity(
@@ -178,7 +191,9 @@ class HeartsRepository(
                     organizer = "H2H Region Jakarta Admin Team",
                     joinedCount = 42,
                     isJoined = false,
-                    customFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfZ6D4oN8-h2h-gather-jkt/viewform"
+                    customFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfZ6D4oN8-h2h-gather-jkt/viewform",
+                    timestamp = System.currentTimeMillis() + (16L * 24 * 3600 * 1000), // 16 days in future
+                    createdBy = "admin"
                 ),
                 EventEntity(
                     id = 2,
@@ -190,7 +205,9 @@ class HeartsRepository(
                     organizer = "Hearts2Hearts Crew",
                     joinedCount = 156,
                     isJoined = true,
-                    customFormUrl = null
+                    customFormUrl = null,
+                    timestamp = System.currentTimeMillis() + (3L * 24 * 3600 * 1000), // 3 days in future
+                    createdBy = "admin"
                 ),
                 EventEntity(
                     id = 3,
@@ -202,7 +219,9 @@ class HeartsRepository(
                     organizer = "H2H Global Streaming Team",
                     joinedCount = 310,
                     isJoined = false,
-                    customFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfStreamingProjectForm/viewform"
+                    customFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfStreamingProjectForm/viewform",
+                    timestamp = System.currentTimeMillis() + (6L * 24 * 3600 * 1000), // 6 days in future
+                    createdBy = "admin"
                 )
             )
             for (evt in defaultEvents) {
@@ -270,27 +289,27 @@ class HeartsRepository(
         }
 
         // 4. Forum Threads and Comments
-        val threads = forumDao.getThreads().firstOrNull()
+        val threads = forumDao.getThreadsSync()
         if (threads.isNullOrEmpty()) {
             val thread1 = ForumEntity(
                 id = 1,
-                title = "Rekomendasi Fanart Hearts2Hearts Minggu Ini! 🎨",
-                content = "Halo kawan-kawan H2H! Aku baru saja selesai menggambar ilustrasi chibi seluruh member untuk merayakan comeback Connection kemarin. Aku penasaran sama karya teman-teman yang lain, yuk bagikan link atau upload post fanart kalian di bawah agar kita bisa saling dukung!",
-                author = "Aline_Art",
-                authorTitle = "H2H Master Illustrator",
-                category = "Fan Art",
-                upvotes = 38,
-                isUpvoted = false,
+                title = "Pengumuman Ambassador Baru: Converse & Barenbliss! 💄👟",
+                content = "Wah gila sih, Hearts2Hearts baru saja diumumkan sebagai brand ambassador untuk Converse dan Barenbliss! Makin sukses aja nih grup kita. Siapa yang udah siap ngeborong produknya demi PC eksklusif?",
+                author = "H2H_Updates",
+                authorTitle = "News Fanpage",
+                category = "News",
+                upvotes = 120,
+                isUpvoted = true,
                 timestamp = System.currentTimeMillis() - 86400000 // 1 day ago
             )
             val thread2 = ForumEntity(
                 id = 2,
-                title = "Teori di Balik Simbol Dua Hati di MV Connection 💖",
-                content = "Teman-teman sadar gak, di menit 02:15 ada simbol dua hati yang terhubung tapi dengan warna merah dan biru? Menurutku ini melambangkan koneksi emosional antara dunia kreator (biru - tenang/inspirasi) dan fans (merah - gairah/semangat) yang saling melengkapi. Bagaimana pendapat kalian? Ada teori lain?",
-                author = "Teoris_H2H",
-                authorTitle = "H2H Chief Theorist",
+                title = "MV 'Lemon Tang' Rilis! Apa pendapat kalian? 🍋",
+                content = "Title track dari 2nd Mini Album akhirnya rilis! Suka banget sama vibenya yang fresh dan energik. Bagian Jiwoo sama Ye-on jadi favoritku. Share pendapat kalian dong!",
+                author = "Lemonade_Lover",
+                authorTitle = "H2H Enthusiast",
                 category = "General",
-                upvotes = 54,
+                upvotes = 95,
                 isUpvoted = false,
                 timestamp = System.currentTimeMillis() - 172800000 // 2 days ago
             )
@@ -339,36 +358,81 @@ class HeartsRepository(
         }
 
         // 5. Community Updates
-        val updates = communityUpdateDao.getUpdates().firstOrNull()
+                val updates = communityUpdateDao.getUpdatesSync()
         if (updates.isNullOrEmpty()) {
             val defaultUpdates = listOf(
                 CommunityUpdateEntity(
                     id = "up_vid_01",
                     type = "video",
-                    title = "[OFFICIAL MV] Hearts2Hearts - Connection",
-                    content = "Single terbaru 'Connection' akhirnya resmi dirilis di YouTube! Tonton dan bantu streaming bersama sekarang untuk merayakan milestone baru kita.",
+                    title = "[OFFICIAL MV] Hearts2Hearts - 'Lemon Tang'",
+                    content = "2nd Mini Album 'Lemon Tang' telah rilis! Jangan lupa tonton MV-nya dan dukung Hearts2Hearts di chart Oricon dan Circle Chart!",
                     timestamp = System.currentTimeMillis() - 3600000,
-                    sourceUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-                    thumbnailUrl = "https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg"
+                    sourceUrl = "https://www.youtube.com/watch?v=1VqxWNwgf5Q",
+                    thumbnailUrl = "https://img.youtube.com/vi/1VqxWNwgf5Q/0.jpg"
                 ),
                 CommunityUpdateEntity(
                     id = "up_ann_01",
                     type = "announcement",
-                    title = "Merchandise Edisi Terbatas 2nd Anniversary!",
-                    content = "Seluruh keuntungan penjualan merchandise gantungan kunci & stiker chibi edisi terbatas 2nd Anniversary akan didonasikan untuk pendanaan event gathering regional mendatang. Silakan cek detail pemesanan di menu event!",
+                    title = "Donasi 50 Juta Won dari Hearts2Hearts!",
+                    content = "Dalam rangka merayakan anniversary pertama, Hearts2Hearts atas nama fanclub resmi menyumbangkan 50 juta won kepada G-Foundation untuk mendukung remaja perempuan yang membutuhkan. Bangga menjadi House!",
                     timestamp = System.currentTimeMillis() - 7200000,
-                    sourceUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfZ6D4oN8-h2h-gather-jkt/viewform",
+                    sourceUrl = "https://hearts2hearts.lnk.to/LemonTang",
                     thumbnailUrl = null,
                     isPinned = true
                 ),
                 CommunityUpdateEntity(
                     id = "up_live_01",
                     type = "live",
-                    title = "[UPCOMING LIVE] Special Q&A Midnight Chat",
-                    content = "Sesi tanya jawab santai dan hangat bersama seluruh member Hearts2Hearts langsung di platform streaming resmi malam ini pukul 20:00 WIB! Jangan lewatkan kesempatan mengobrol seru ini.",
+                    title = "[UPCOMING] Hearts2House 2026 Fan Meetings",
+                    content = "Hearts2House 2026 siap digelar di berbagai kota besar termasuk Seoul, New York, Los Angeles, dan Jakarta. Pastikan kalian mengamankan tiketnya!",
                     timestamp = System.currentTimeMillis() - 10800000,
-                    sourceUrl = "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
-                    thumbnailUrl = "https://img.youtube.com/vi/kJQP7kiw5Fk/0.jpg"
+                    sourceUrl = "https://instagram.com/hearts2hearts",
+                    thumbnailUrl = null
+                ),
+                CommunityUpdateEntity(
+                    id = "up_soc_01",
+                    type = "social_media",
+                    title = "New Post from Instagram @hearts2hearts",
+                    content = "The NEW model that perfectly captures the soft mood of 2aN is none other than #HeartsToHearts! We are so excited for this collaboration. Please show a lot of love! 💖",
+                    timestamp = System.currentTimeMillis() - 14400000,
+                    sourceUrl = "https://instagram.com/hearts2hearts",
+                    thumbnailUrl = null
+                ),
+                CommunityUpdateEntity(
+                    id = "up_soc_02",
+                    type = "social_media",
+                    title = "New Post from X @Hearts2Hearts",
+                    content = "Hearts2Hearts officially announced as the new muse for Sorule! Get smooth and shiny hair with Hearts2Hearts at Sorule. Check out comments from the members! ✨ #Hearts2Hearts #Sorule",
+                    timestamp = System.currentTimeMillis() - 21600000,
+                    sourceUrl = "https://x.com/Hearts2Hearts",
+                    thumbnailUrl = null
+                ),
+                CommunityUpdateEntity(
+                    id = "up_soc_03",
+                    type = "social_media",
+                    title = "New Post from TikTok @hearts2hearts",
+                    content = "Lemon Tang Challenge with Carmen and Ye-on! 🍋 Let's dance together! #LemonTangChallenge #Hearts2Hearts",
+                    timestamp = System.currentTimeMillis() - 28800000,
+                    sourceUrl = "https://tiktok.com/@hearts2hearts",
+                    thumbnailUrl = null
+                ),
+                CommunityUpdateEntity(
+                    id = "up_soc_04",
+                    type = "social_media",
+                    title = "New Post from Facebook @hearts2heartsH2H",
+                    content = "Thank you House for all the love and support for Lemon Tang! Let's continue to shine together! ✨",
+                    timestamp = System.currentTimeMillis() - 36000000,
+                    sourceUrl = "https://facebook.com/hearts2heartsH2H",
+                    thumbnailUrl = null
+                ),
+                CommunityUpdateEntity(
+                    id = "up_soc_05",
+                    type = "social_media",
+                    title = "New Video on YouTube @hearts2hearts.official",
+                    content = "Behind The Scenes: Lemon Tang MV Shooting Day 1. Come see the members having fun on set! 🍋🎥",
+                    timestamp = System.currentTimeMillis() - 42000000,
+                    sourceUrl = "https://www.youtube.com/@hearts2hearts.official",
+                    thumbnailUrl = null
                 )
             )
             for (up in defaultUpdates) {
@@ -380,4 +444,88 @@ class HeartsRepository(
     override suspend fun refreshThreads() {}
     override suspend fun loadMoreEvents() {}
     override suspend fun refreshEvents() {}
+
+    // Live Streaming & Integrated Live Chat Features
+    private val _liveSessions = MutableStateFlow<List<LiveStreamSession>>(
+        listOf(
+            LiveStreamSession(
+                streamId = "live_default_carmen",
+                hostUserId = "1",
+                title = "H2H Carmen - Sesi Tanya Jawab Santai Sore 💖",
+                streamUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                viewerCount = 124,
+                chatParticipantCount = 42,
+                isActive = true
+            )
+        )
+    )
+    override val activeLiveSessions: Flow<List<LiveStreamSession>> = _liveSessions.asStateFlow()
+
+    override fun getLiveSession(streamId: String): Flow<LiveStreamSession?> {
+        return _liveSessions.map { sessions -> sessions.find { it.streamId == streamId } }
+    }
+
+    override suspend fun startLiveSession(hostUserId: String, title: String, streamUrl: String): String {
+        val streamId = "live_${System.currentTimeMillis()}"
+        val newSession = LiveStreamSession(
+            streamId = streamId,
+            hostUserId = hostUserId,
+            title = title,
+            streamUrl = streamUrl,
+            viewerCount = 1,
+            chatParticipantCount = 1,
+            isActive = true
+        )
+        _liveSessions.update { it + newSession }
+        val currentUser = userDao.getUserSync()
+        if (currentUser != null) {
+            userDao.insertOrUpdateUser(currentUser.copy(isLive = true, currentStreamId = streamId))
+        }
+        return streamId
+    }
+
+    override suspend fun stopLiveSession(streamId: String) {
+        _liveSessions.update { sessions ->
+            sessions.map { if (it.streamId == streamId) it.copy(isActive = false) else it }
+        }
+        val currentUser = userDao.getUserSync()
+        if (currentUser != null && currentUser.currentStreamId == streamId) {
+            userDao.insertOrUpdateUser(currentUser.copy(isLive = false, currentStreamId = null))
+        }
+    }
+
+    override suspend fun incrementViewerCount(streamId: String) {
+        _liveSessions.update { sessions ->
+            sessions.map { if (it.streamId == streamId) it.copy(viewerCount = it.viewerCount + 1) else it }
+        }
+    }
+
+    override suspend fun decrementViewerCount(streamId: String) {
+        _liveSessions.update { sessions ->
+            sessions.map { if (it.streamId == streamId) it.copy(viewerCount = maxOf(0, it.viewerCount - 1)) else it }
+        }
+    }
+
+    private val _liveChatMessages = MutableStateFlow<List<LiveChatMessage>>(
+        listOf(
+            LiveChatMessage("msg_1", "live_default_carmen", "H2H_Spark", "Senior Fan Club Member", "Halo Carmen! Kakak cantik bgt hari ini 😍"),
+            LiveChatMessage("msg_2", "live_default_carmen", "Carmen", "admin", "Halo semuanya! Makasih ya udah sempetin mampir ke live chat aku")
+        )
+    )
+
+    override fun getLiveChatMessages(streamId: String): Flow<List<LiveChatMessage>> {
+        return _liveChatMessages.map { messages -> messages.filter { it.streamId == streamId } }
+    }
+
+    override suspend fun sendLiveChatMessage(streamId: String, senderName: String, text: String, senderRole: String) {
+        val message = LiveChatMessage(
+            id = "msg_${System.currentTimeMillis()}",
+            streamId = streamId,
+            senderName = senderName,
+            senderRole = senderRole,
+            text = text,
+            timestamp = System.currentTimeMillis()
+        )
+        _liveChatMessages.update { it + message }
+    }
 }

@@ -8,9 +8,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class FirebaseHeartsRepository(
     private val context: Context,
@@ -43,6 +46,7 @@ class FirebaseHeartsRepository(
     // Data selalu dibaca dari Room untuk menghemat kuota Firestore
     override val userProfile: Flow<UserEntity?> = userDao.getUser()
     override val allEvents: Flow<List<EventEntity>> = eventDao.getEvents()
+    override fun getNearestEvent(currentTime: Long): Flow<EventEntity?> = eventDao.getNearestEvent(currentTime)
     override val allThreads: Flow<List<ForumEntity>> = forumDao.getThreads()
     override val allVideos: Flow<List<VideoEntity>> = videoDao.getVideos()
     override val allUpdates: Flow<List<CommunityUpdateEntity>> = communityUpdateDao.getUpdates()
@@ -213,6 +217,22 @@ class FirebaseHeartsRepository(
         updates.forEach { communityUpdateDao.insertUpdate(it) }
     }
     
+    override suspend fun clearLocalData() = withContext(Dispatchers.IO) {
+        communityUpdateDao.clearAllUpdates()
+    }
+
+    override suspend fun deleteUserProfile() = withContext(Dispatchers.IO) {
+        userDao.deleteUser()
+    }
+
+    override suspend fun deleteThreadById(id: Int) = withContext(Dispatchers.IO) {
+        forumDao.deleteThreadById(id)
+    }
+
+    override suspend fun deleteEventById(id: Int) = withContext(Dispatchers.IO) {
+        eventDao.deleteEventById(id)
+    }
+
     override suspend fun prepopulateIfEmpty() = withContext(Dispatchers.IO) {
         // Will check Firestore cache limit before deciding to prepopulate from local defaults
         if (isCacheExpired("threads_sync")) {
@@ -220,6 +240,219 @@ class FirebaseHeartsRepository(
         }
         if (isCacheExpired("events_sync")) {
             refreshEvents()
+        }
+    }
+
+    // Live Streaming & Integrated Live Chat Features
+    private val _simulatedLiveSessions = MutableStateFlow<List<LiveStreamSession>>(
+        listOf(
+            LiveStreamSession(
+                streamId = "live_default_carmen",
+                hostUserId = "1",
+                title = "H2H Carmen - Sesi Tanya Jawab Santai Sore 💖",
+                streamUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                viewerCount = 124,
+                chatParticipantCount = 42,
+                isActive = true
+            )
+        )
+    )
+    private val _simulatedLiveChatMessages = MutableStateFlow<List<LiveChatMessage>>(
+        listOf(
+            LiveChatMessage("msg_1", "live_default_carmen", "H2H_Spark", "Senior Fan Club Member", "Halo Carmen! Kakak cantik bgt hari ini 😍"),
+            LiveChatMessage("msg_2", "live_default_carmen", "Carmen", "admin", "Halo semuanya! Makasih ya udah sempetin mampir ke live chat aku")
+        )
+    )
+
+    override val activeLiveSessions: Flow<List<LiveStreamSession>> = callbackFlow {
+        if (db == null) {
+            val job = this@callbackFlow.launch {
+                _simulatedLiveSessions.collect { trySend(it) }
+            }
+            awaitClose { job.cancel() }
+            return@callbackFlow
+        }
+        val subscription = db!!.collection("live_sessions")
+            .whereEqualTo("isActive", true)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val sessions = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(LiveStreamSession::class.java)
+                    }
+                    trySend(sessions)
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+
+    override fun getLiveSession(streamId: String): Flow<LiveStreamSession?> = callbackFlow {
+        if (db == null) {
+            val job = this@callbackFlow.launch {
+                _simulatedLiveSessions.map { sessions -> sessions.find { it.streamId == streamId } }.collect { trySend(it) }
+            }
+            awaitClose { job.cancel() }
+            return@callbackFlow
+        }
+        val subscription = db!!.collection("live_sessions").document(streamId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    trySend(snapshot.toObject(LiveStreamSession::class.java))
+                } else {
+                    trySend(null)
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+
+    override suspend fun startLiveSession(hostUserId: String, title: String, streamUrl: String): String = withContext(Dispatchers.IO) {
+        val streamId = "live_${System.currentTimeMillis()}"
+        val session = LiveStreamSession(
+            streamId = streamId,
+            hostUserId = hostUserId,
+            title = title,
+            streamUrl = streamUrl,
+            viewerCount = 1,
+            chatParticipantCount = 1,
+            isActive = true
+        )
+        if (db != null) {
+            try {
+                db!!.collection("live_sessions").document(streamId).set(session).await()
+            } catch (e: Exception) {
+                Log.e("FirebaseSync", "Failed to start live session in Firestore", e)
+            }
+        } else {
+            _simulatedLiveSessions.update { it + session }
+        }
+        val currentUser = userDao.getUserSync()
+        if (currentUser != null) {
+            userDao.insertOrUpdateUser(currentUser.copy(isLive = true, currentStreamId = streamId))
+        }
+        return@withContext streamId
+    }
+
+    override suspend fun stopLiveSession(streamId: String) = withContext(Dispatchers.IO) {
+        if (db != null) {
+            try {
+                db!!.collection("live_sessions").document(streamId).update("isActive", false).await()
+            } catch (e: Exception) {
+                Log.e("FirebaseSync", "Failed to stop live session in Firestore", e)
+            }
+        } else {
+            _simulatedLiveSessions.update { sessions ->
+                sessions.map { if (it.streamId == streamId) it.copy(isActive = false) else it }
+            }
+        }
+        val currentUser = userDao.getUserSync()
+        if (currentUser != null && currentUser.currentStreamId == streamId) {
+            userDao.insertOrUpdateUser(currentUser.copy(isLive = false, currentStreamId = null))
+        }
+    }
+
+    override suspend fun incrementViewerCount(streamId: String) {
+        withContext(Dispatchers.IO) {
+            if (db != null) {
+                try {
+                    val docRef = db!!.collection("live_sessions").document(streamId)
+                    db!!.runTransaction { transaction ->
+                        val snapshot = transaction.get(docRef)
+                        val currentCount = snapshot.getLong("viewerCount") ?: 0
+                        transaction.update(docRef, "viewerCount", currentCount + 1)
+                    }.await()
+                } catch (e: Exception) {
+                    Log.e("FirebaseSync", "Failed to increment viewer count", e)
+                }
+            } else {
+                _simulatedLiveSessions.update { sessions ->
+                    sessions.map { if (it.streamId == streamId) it.copy(viewerCount = it.viewerCount + 1) else it }
+                }
+            }
+        }
+    }
+
+    override suspend fun decrementViewerCount(streamId: String) {
+        withContext(Dispatchers.IO) {
+            if (db != null) {
+                try {
+                    val docRef = db!!.collection("live_sessions").document(streamId)
+                    db!!.runTransaction { transaction ->
+                        val snapshot = transaction.get(docRef)
+                        val currentCount = snapshot.getLong("viewerCount") ?: 0
+                        transaction.update(docRef, "viewerCount", maxOf(0, currentCount - 1))
+                    }.await()
+                } catch (e: Exception) {
+                    Log.e("FirebaseSync", "Failed to decrement viewer count", e)
+                }
+            } else {
+                _simulatedLiveSessions.update { sessions ->
+                    sessions.map { if (it.streamId == streamId) it.copy(viewerCount = maxOf(0, it.viewerCount - 1)) else it }
+                }
+            }
+        }
+    }
+
+    override fun getLiveChatMessages(streamId: String): Flow<List<LiveChatMessage>> = callbackFlow {
+        if (db == null) {
+            val job = this@callbackFlow.launch {
+                _simulatedLiveChatMessages.map { messages -> messages.filter { it.streamId == streamId } }.collect { trySend(it) }
+            }
+            awaitClose { job.cancel() }
+            return@callbackFlow
+        }
+        val subscription = db!!.collection("live_chats")
+            .whereEqualTo("streamId", streamId)
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val messages = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(LiveChatMessage::class.java)
+                    }
+                    trySend(messages)
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+
+    override suspend fun sendLiveChatMessage(streamId: String, senderName: String, text: String, senderRole: String) {
+        withContext(Dispatchers.IO) {
+            val message = LiveChatMessage(
+                id = "msg_${System.currentTimeMillis()}",
+                streamId = streamId,
+                senderName = senderName,
+                senderRole = senderRole,
+                text = text,
+                timestamp = System.currentTimeMillis()
+            )
+            if (db != null) {
+                try {
+                    db!!.collection("live_chats").document(message.id).set(message).await()
+                    val docRef = db!!.collection("live_sessions").document(streamId)
+                    db!!.runTransaction { transaction ->
+                        val snapshot = transaction.get(docRef)
+                        val currentCount = snapshot.getLong("chatParticipantCount") ?: 0
+                        transaction.update(docRef, "chatParticipantCount", currentCount + 1)
+                    }.await()
+                } catch (e: Exception) {
+                    Log.e("FirebaseSync", "Failed to send live chat to Firestore", e)
+                }
+            } else {
+                _simulatedLiveChatMessages.update { it + message }
+                _simulatedLiveSessions.update { sessions ->
+                    sessions.map { if (it.streamId == streamId) it.copy(chatParticipantCount = it.chatParticipantCount + 1) else it }
+                }
+            }
         }
     }
 }

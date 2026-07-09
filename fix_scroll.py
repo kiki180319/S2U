@@ -1,22 +1,14 @@
-with open('app/src/main/java/com/example/ui/screens/AiChatScreen.kt', 'r') as f:
+with open('app/src/main/java/com/example/ui/screens/MembersScreen.kt', 'r') as f:
     content = f.read()
 
-old_scroll = """    LaunchedEffect(chatMessages.size, chatLoading) {
-        if (chatMessages.isNotEmpty()) {
-            listState.animateScrollToItem(chatMessages.size)
-        }
-    }"""
+# Add imports for scrolling
+imports_to_add = """import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+"""
 
-new_scroll = """    LaunchedEffect(chatMessages.size, chatLoading) {
-        if (chatMessages.isNotEmpty()) {
-            val targetIndex = if (chatLoading) chatMessages.size else chatMessages.size - 1
-            if (targetIndex >= 0) {
-                listState.animateScrollToItem(targetIndex)
-            }
-        }
-    }"""
+content = content.replace("import androidx.compose.foundation.shape.RoundedCornerShape", imports_to_add + "import androidx.compose.foundation.shape.RoundedCornerShape")
 
-content = content.replace(old_scroll, new_scroll)
+content = content.replace("Modifier.fillMaxSize().padding(16.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())", "Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())")
 
-with open('app/src/main/java/com/example/ui/screens/AiChatScreen.kt', 'w') as f:
+with open('app/src/main/java/com/example/ui/screens/MembersScreen.kt', 'w') as f:
     f.write(content)

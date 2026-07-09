@@ -12,6 +12,10 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.WifiTethering
 import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -36,27 +40,27 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(viewModel: HeartsViewModel) {
     val updates by viewModel.updates.collectAsStateWithLifecycle()
-    var isRefreshing by remember { mutableStateOf(false) }
+    val isRssLoading by viewModel.isRssLoading.collectAsStateWithLifecycle()
+    val rssError by viewModel.rssError.collectAsStateWithLifecycle()
     
     val scope = rememberCoroutineScope()
 
     PullToRefreshBox(
-        isRefreshing = isRefreshing,
+        isRefreshing = isRssLoading,
         onRefresh = {
-            scope.launch {
-                isRefreshing = true
-                delay(1500)
-                isRefreshing = false
-            }
+            viewModel.fetchRssUpdates()
         },
         modifier = Modifier.fillMaxSize().background(PremiumBlack)
     ) {
-        if (updates.isEmpty() && !isRefreshing) {
+        if (updates.isEmpty() && !isRssLoading) {
             EmptyState()
         } else {
             LazyColumn(
@@ -65,7 +69,17 @@ fun FeedScreen(viewModel: HeartsViewModel) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(updates, key = { it.id }) { update ->
-                    UpdateCard(update = update, onClick = { /* TODO: Open detail/URL */ })
+                    val context = LocalContext.current
+                    UpdateCard(update = update, onClick = { 
+                        update.sourceUrl?.let { url ->
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            try {
+                                context.startActivity(intent)
+                            } catch(e: Exception) {
+                                // Ignore
+                            }
+                        }
+                    })
                 }
                 item {
                     Spacer(modifier = Modifier.height(80.dp))
@@ -110,15 +124,31 @@ fun UpdateCard(update: CommunityUpdateEntity, onClick: () -> Unit) {
     val dateString = dateFormat.format(Date(update.timestamp))
     
     val icon = when (update.type.lowercase()) {
-        "video" -> Icons.Default.PlayCircle
+        "video", "youtube" -> Icons.Default.PlayCircle
         "live" -> Icons.Default.WifiTethering
+        "instagram" -> Icons.Default.CameraAlt
+        "tiktok" -> Icons.Default.MusicNote
+        "x" -> Icons.Default.AlternateEmail
         else -> Icons.Default.Campaign
     }
     
     val iconTint = when (update.type.lowercase()) {
-        "video" -> HeartsPink
+        "video", "youtube" -> Color(0xFFFF0000) // YouTube Red
         "live" -> StatusGreen
+        "instagram" -> Color(0xFFE1306C) // Instagram Pinkish
+        "tiktok" -> Color(0xFF00F2FE) // TikTok Cyan
+        "x" -> Color(0xFF1DA1F2) // Twitter/X Blue
         else -> HeartsGold
+    }
+
+    val typeLabel = when (update.type.lowercase()) {
+        "video" -> "OFFICIAL VIDEO"
+        "youtube" -> "YOUTUBE"
+        "instagram" -> "INSTAGRAM"
+        "tiktok" -> "TIKTOK"
+        "x" -> "X (TWITTER)"
+        "live" -> "LIVESTREAM"
+        else -> update.type.uppercase()
     }
 
     Surface(
@@ -159,7 +189,7 @@ fun UpdateCard(update: CommunityUpdateEntity, onClick: () -> Unit) {
                             Spacer(modifier = Modifier.width(4.dp))
                         }
                         Text(
-                            text = update.type.uppercase(),
+                            text = typeLabel,
                             color = iconTint,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -189,9 +219,27 @@ fun UpdateCard(update: CommunityUpdateEntity, onClick: () -> Unit) {
                 color = PremiumLightGray,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
-                maxLines = 3,
+                maxLines = 4,
                 overflow = TextOverflow.Ellipsis
             )
+
+            if (!update.thumbnailUrl.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(PremiumMediumGray)
+                ) {
+                    coil.compose.AsyncImage(
+                        model = update.thumbnailUrl,
+                        contentDescription = update.title,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
         }
     }
 }

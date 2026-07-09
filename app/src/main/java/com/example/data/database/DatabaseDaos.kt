@@ -11,15 +11,25 @@ import kotlinx.coroutines.flow.Flow
 interface UserDao {
     @Query("SELECT * FROM user_profile WHERE id = 1 LIMIT 1")
     fun getUser(): Flow<UserEntity?>
+    @Query("SELECT * FROM user_profile WHERE id = 1 LIMIT 1")
+    suspend fun getUserSync(): UserEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateUser(user: UserEntity)
+
+    @Query("DELETE FROM user_profile WHERE id = 1")
+    suspend fun deleteUser()
 }
 
 @Dao
 interface EventDao {
     @Query("SELECT * FROM events ORDER BY id DESC")
     fun getEvents(): Flow<List<EventEntity>>
+    @Query("SELECT * FROM events ORDER BY id DESC")
+    suspend fun getEventsSync(): List<EventEntity>
+
+    @Query("SELECT * FROM events WHERE timestamp >= :currentTime ORDER BY timestamp ASC LIMIT 1")
+    fun getNearestEvent(currentTime: Long): Flow<EventEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvent(event: EventEntity)
@@ -35,12 +45,17 @@ interface EventDao {
 interface ForumDao {
     @Query("SELECT * FROM forum_threads ORDER BY timestamp DESC")
     fun getThreads(): Flow<List<ForumEntity>>
+    @Query("SELECT * FROM forum_threads ORDER BY timestamp DESC")
+    suspend fun getThreadsSync(): List<ForumEntity>
 
     @Query("SELECT * FROM forum_threads WHERE id = :id LIMIT 1")
     fun getThreadById(id: Int): Flow<ForumEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertThread(thread: ForumEntity)
+    
+    @Query("DELETE FROM forum_threads WHERE id = :id")
+    suspend fun deleteThreadById(id: Int)
 
     @Update
     suspend fun updateThread(thread: ForumEntity)
@@ -59,6 +74,8 @@ interface CommentDao {
 interface VideoDao {
     @Query("SELECT * FROM videos")
     fun getVideos(): Flow<List<VideoEntity>>
+    @Query("SELECT * FROM videos")
+    suspend fun getVideosSync(): List<VideoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertVideo(video: VideoEntity)
@@ -92,6 +109,8 @@ interface EventAttendeeDao {
 interface CommunityUpdateDao {
     @Query("SELECT * FROM community_updates ORDER BY timestamp DESC")
     fun getUpdates(): Flow<List<CommunityUpdateEntity>>
+    @Query("SELECT * FROM community_updates ORDER BY timestamp DESC")
+    suspend fun getUpdatesSync(): List<CommunityUpdateEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUpdate(update: CommunityUpdateEntity)

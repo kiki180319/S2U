@@ -22,8 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.screens.MainScreen
-import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.theme.Hearts2HeartsTheme
 import com.example.ui.viewmodel.HeartsViewModel
 
 class MainActivity : ComponentActivity() {
@@ -42,7 +44,8 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
+            val themeName by vm.currentTheme.collectAsStateWithLifecycle()
+            Hearts2HeartsTheme(themeName = themeName) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = androidx.compose.material3.MaterialTheme.colorScheme.background
@@ -147,6 +150,38 @@ class MainActivity : ComponentActivity() {
                     startActivity(intent)
                 } catch (ex: Exception) {
                     Log.e("MainActivity", "Gagal membuka setelan optimasi baterai", ex)
+                }
+            }
+        }
+    }
+
+    /**
+     * Memeriksa apakah izin overlay (SYSTEM_ALERT_WINDOW) sudah diberikan.
+     */
+    fun checkOverlayPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(this)
+        } else {
+            true
+        }
+    }
+
+    /**
+     * Mengarahkan pengguna ke setelan sistem untuk memberikan izin overlay.
+     */
+    fun requestOverlayPermission() {
+        if (!checkOverlayPermission()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:$packageName")
+                    ).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Gagal meminta izin overlay", e)
                 }
             }
         }

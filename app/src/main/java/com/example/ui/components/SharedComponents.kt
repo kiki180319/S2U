@@ -3,7 +3,7 @@ package com.example.ui.components
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -53,6 +53,91 @@ fun AvatarBadge(avatarName: String, size: Dp = 40.dp, fontSize: TextUnit = 18.sp
 @Composable
 fun UserAvatarBadge(userName: String, size: Dp = 36.dp, fontSize: TextUnit = 16.sp) {
     AvatarBadge(avatarName = userName, size = size, fontSize = fontSize)
+}
+
+@Composable
+fun UserAvatarWithLiveBadge(
+    userName: String,
+    isLive: Boolean,
+    size: Dp = 40.dp,
+    fontSize: TextUnit = 16.sp,
+    onClick: (() -> Unit)? = null
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "live_pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse_alpha"
+    )
+    val borderScale by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "border_scale"
+    )
+
+    Box(
+        modifier = Modifier
+            .clickable(enabled = onClick != null) { onClick?.invoke() },
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLive) {
+            // Pulsing Ring under the Avatar
+            Box(
+                modifier = Modifier
+                    .size(size + 4.dp)
+                    .scale(borderScale)
+                    .border(2.dp, Color.Red.copy(alpha = pulseAlpha), CircleShape)
+            )
+        }
+
+        // The Actual Avatar
+        Box(
+            modifier = Modifier
+                .size(size)
+                .background(PremiumDarkGray, CircleShape)
+                .border(
+                    width = if (isLive) 2.dp else 1.dp,
+                    color = if (isLive) Color.Red else HeartsPink.copy(alpha = 0.5f),
+                    shape = CircleShape
+                )
+                .clip(CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = userName.take(1).uppercase(),
+                color = if (isLive) Color.Red else HeartsPink,
+                fontWeight = FontWeight.Bold,
+                fontSize = fontSize
+            )
+        }
+
+        if (isLive) {
+            // LIVE Badge overlay
+            Surface(
+                color = Color.Red,
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 6.dp)
+            ) {
+                Text(
+                    text = "LIVE",
+                    color = Color.White,
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable
