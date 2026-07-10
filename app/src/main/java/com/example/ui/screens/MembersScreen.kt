@@ -19,8 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -131,8 +129,8 @@ fun MemberCard(member: MemberProfile, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = getMemberImageId(member.stageName)),
+                AsyncImage(
+                    model = getMemberImageId(member.stageName),
                     contentDescription = member.stageName,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -162,8 +160,8 @@ fun MemberDetailScreen(member: MemberProfile, onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(24.dp))
         
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Image(
-                painter = painterResource(id = getMemberImageId(member.stageName)),
+            AsyncImage(
+                model = getMemberImageId(member.stageName),
                 contentDescription = member.stageName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
